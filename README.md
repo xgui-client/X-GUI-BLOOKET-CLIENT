@@ -1,7 +1,7 @@
 # 🚀 X-GUI Blooket Client
 
 [![Website](https://img.shields.io/badge/Website-X--GUI-blue)](https://xull-xxx.github.io)  
-[![Stars](https://img.shields.io/github/stars/XULL-XXX/X-GUI-BLOOKET-CLIENT?style=social)](https://github.com/XULL-XXX/X-GUI-BLOOKET-CLIENT/stargazers)  
+[![Stars](https://img.shields.io/github/stars/xull-xxx/X-GUI-BLOOKET-CLIENT?style=social)](https://github.com/xull-xxx/X-GUI-BLOOKET-CLIENT/stargazers)
 [![License](https://img.shields.io/badge/License-AGPL-3.0-green)]()
 
 **The most advanced, unbannable Blooket GUI – actively maintained and not patched!**
