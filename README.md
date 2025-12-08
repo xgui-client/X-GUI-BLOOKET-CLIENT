@@ -61,19 +61,28 @@ If you enjoy X-GUI, please give it a **star**! 🌟
 <details>
 <summary>🎯 Global Cheats</summary>
 
-| Cheat | Cheat |
-|-------|-------|
-| Auto Answer | Change Blook Ingame |
-| Every Answer Correct | Get Daily Rewards |
-| Highlight Answers | Host Any Gamemode |
-| Remove Name Limit | Remove Random Name |
-| Sell Cheap Duplicates | Sell Duplicate Blooks |
-| Simulate Pack | Simulate Unlock |
-| Spam Buy Blooks | Subtle Highlight Answers |
-| Use Any Blook | Use Any Banner |
-| Remove All Taken Blooks | Bypass Name Filter |
-| Blooket Bot | Free Player Slots |
-| Freeze Leaderboard | |
+- Auto Answer  
+- Change Blook Ingame  
+- Every Answer Correct  
+- Get Daily Rewards  
+- Highlight Answers  
+- Host Any Gamemode  
+- Remove Name Limit  
+- Remove Random Name  
+- Sell Cheap Duplicates  
+- Sell Duplicate Blooks  
+- Simulate Pack  
+- Simulate Unlock  
+- Spam Buy Blooks  
+- Subtle Highlight Answers  
+- Use Any Blook  
+- Use Any Banner  
+- Remove All Taken Blooks  
+- Bypass Name Filter  
+- Blooket Bot  
+- Free Player Slots  
+- Freeze Leaderboard
+
 </details>
 
 <details>
