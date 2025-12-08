@@ -1,7 +1,7 @@
 # X-GUI-BLOOKET-CLIENT
 
 # THE MOST ADVANCED, UNBANNABLE BLOOKET GUI, NOT PATCHED AND MAINTAINED!
-# VISIT THE WEBSITE: [X-GUI](https://www.xull-xxx.github.io)
+# VISIT THE WEBSITE: [X-GUI](https://xull-xxx.github.io)
 
 ## Setup And Usage Instructions ⚙️
 
