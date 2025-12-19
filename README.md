@@ -52,13 +52,18 @@ I'll be back in january y'all!
 ## 📜 Credits
 - **GUI Created By:** 05Konz  
 - **Maintained & Updated By:** Xullys
-- ** THIS GUI WAS MADE POSSIBLE WITH ALL OF YOUR SUPPORT AND HELP FROM 05KONZ HIMSELF!!
+- ** THIS GUI WAS MADE POSSIBLE WITH ALL OF YOUR SUPPORT AND HELP FROM 05KONZ HIMSELF!!**
 
 ---
 
 ## ❗ Disclaimer
 I am **not responsible** for any action taken against you or your Blooket account.  
 **Please use responsibly!**
+
+---
+
+## 📄 Feedback
+Please create an issue or email me!
 
 ---
 
