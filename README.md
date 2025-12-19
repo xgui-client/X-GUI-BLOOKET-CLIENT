@@ -58,6 +58,7 @@ I'll be back in january y'all!
 ## ❗ Disclaimer
 I am **not responsible** for any action taken against you or your Blooket account.  
 **Please use responsibly!**
+**PLEASE DO NOT REPOST X-GUI WITHOUT GIVING CREDIT, I'VE NOTICED A LOT OF THIS LATELY, THANKS**
 
 ---
 
