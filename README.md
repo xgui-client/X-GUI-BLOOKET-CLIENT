@@ -1,6 +1,6 @@
 # 🚀 X-GUI Blooket Client
 # THANKS FOR TRYING X-GUI!
-Note From The Author:
+#Note From The Author:
 Thanks so much for the support guys!
 I never thought this project would get this much attention and grow so much!
 I'm taking a break for the holidays, enjoy 6.50x!
