@@ -46,8 +46,10 @@
 ---
 
 ## 📜 Credits
-- **GUI Created By:** 05Konz  
+- **GUI Created By:** 05Konz 
 - **Maintained & Updated By:** Xullys
+- **HUGE CREDIT TO CRYPTODUDE3**
+- **JOIN HIS DISCORD** [HERE](https://discord.com/channels/1238253338995195995/1379132344606396508)
 
 ---
 
