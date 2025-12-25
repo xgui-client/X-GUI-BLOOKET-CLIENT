@@ -1,9 +1,9 @@
 (function() {
     'use strict';
 
-    const MONTH = "1"; // 1=January, 2=February, etc
-    const YEAR = "1990";
-    const WEBHOOK_URL = "...";
+    const MONTH = String(Math.floor(Math.random() * 12) + 1);
+const YEAR = String(Math.floor(Math.random() * (2000 - 1980 + 1)) + 1980);
+    
 
     function generateBlooketPassword() {
         const lowercase = 'abcdefghijklmnopqrstuvwxyz';
@@ -316,19 +316,7 @@
                 console.log('Checked agreement checkbox');
             }
 
-            console.log('Discord webhook dipshit...');
-            try {
-                await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        content: `New account:\nMail: ${emailAccount.address}\nPassword: ${PASSWORD}`
-                    })
-                });
-                console.log('Webhook sent successfully');
-            } catch (error) {
-                console.error('Failed to send webhook:', error);
-            }
+            
 
             console.log('Looking for final Submit button...');
             submitButton = await waitForElement('button[type="submit"].formButton');
