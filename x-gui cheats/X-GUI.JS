@@ -1480,59 +1480,7 @@ window.addEventListener("beforeunload", saveGUIState);
                         },
                     },
                     {
-                        name: "Pin Guesser",
-description: "Brute forces combinations for existing pins ONLY WORKS IF CSP IS DISABLED, YOU NEED TO SPAM A LOT TO FIND WORKING PIN!!!",
-run: function() {
-    if (!window.location.href.includes("play.blooket.com")) alert("This cheat only works on play.blooket.com, opening a new tab."), window.open("https://play.blooket.com/");
-    {
-        var e = 0,
-            t = 0,
-            a = document.querySelector("div[class*='titleText']");
-
-        function o() {
-            return Object.values(function e(t = document.querySelector("body>div")) {
-                return Object.values(t)[1]?.children?.[0]?._owner.stateNode ? t : e(t.querySelector(":scope>div"))
-            }())[1].children[0]._owner.stateNode
-        }
-
-        !function r() {
-            let i = Math.floor(9e6 * Math.random()) + 1e6;
-            fetch(`https://fb.blooket.com/c/firebase/id?id=${i}`, {
-                method: "GET",
-                credentials: "include"
-            }).then(e => e.json()).then(n => {
-                if (n.success === true) {
-                    console.log("Game found:", i);
-                    a.innerHTML = "Game Found!";
-                    o().setState({
-                        client: {
-                            hostId: i.toString()
-                        }
-                    });
-                } else {
-                    console.log("No game found for:", i);
-                    o().setState({
-                        client: {
-                            hostId: i.toString()
-                        }
-                    });
-                    e++;
-                    a.innerHTML = "Guesses: " + e;
-                    if (++t > 15) {
-                        setTimeout(r, 1e3);
-                        t = 0;
-                    } else {
-                        r();
-                    }
-                }
-            }).catch(e => {
-                console.error("Error fetching game ID:", e);
-            });
-        }()
-    }
-}
-
-                    },{
+                       
                         name: "Free Player Slots",
             description: "Allows more players to join if the game is full",
             run: async () => {
