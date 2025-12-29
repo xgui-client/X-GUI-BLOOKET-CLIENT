@@ -6452,27 +6452,20 @@ altPage.onPath = renderAlts;
 
 
 const blookPage = document.createElement("div");
-blookPage.className = "blookPage";
+blookPage.className = classes.favoritesPage || "favoritesPage";
 
 Object.assign(blookPage.style, {
   display: "flex",
   flexDirection: "column",
   gap: "18px",
-  padding: "25px 20px 60px",
-  overflowY: "auto",
-  height: "100%",
-  background: "linear-gradient(135deg, #0b1020, #12162e, #1b1240)",
-  borderRadius: "14px"
+  padding: "25px 20px 50px 20px",
+  overflowY: "auto"
 });
-
 
 const Blookstyle = document.createElement("style");
 Blookstyle.textContent = `
 .blookPage::-webkit-scrollbar { width: 6px; }
-.blookPage::-webkit-scrollbar-thumb {
-  background: #5b4bdb;
-  border-radius: 4px;
-}
+.blookPage::-webkit-scrollbar-thumb { background: #5b4bdb; border-radius: 4px; }
 
 .editorContainer {
   display: flex;
@@ -6486,17 +6479,12 @@ Blookstyle.textContent = `
 
 .blookInput {
   width: 70px;
-  padding: 8px 10px;
+  padding: 8px;
   border-radius: 12px;
   border: 1px solid rgba(120,100,255,0.25);
   background: rgba(20,25,55,0.65);
   color: #fff;
   text-align: center;
-}
-.blookInput:focus {
-  border-color: #8f6bff;
-  box-shadow: 0 0 10px rgba(120,100,255,0.7);
-  outline: none;
 }
 
 .previewBox {
@@ -6506,18 +6494,23 @@ Blookstyle.textContent = `
   background: rgba(10,12,30,0.7);
   border-radius: 20px;
   border: 1px solid rgba(120,100,255,0.35);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.55);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
 }
 
-.previewLabel {
-  font-weight: 800;
-  color: #cfcfff;
-  font-size: 0.9em;
+.previewStack {
+  position: relative;
+  width: 180px;
+  height: 180px;
+}
+
+.previewStack img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .finalConfigInput {
@@ -6541,24 +6534,19 @@ Blookstyle.textContent = `
   font-weight: 900;
   color: #fff;
   background: linear-gradient(135deg, #8f6bff, #5b4bdb);
-  box-shadow: 0 8px 22px rgba(120,100,255,0.45);
 }
 `;
 document.head.appendChild(Blookstyle);
 
-
 blookPage.innerHTML += `
 <div style="text-align:center">
   <div style="font-size:2em;font-weight:900;color:#fff">🖌️ Blook Editor</div>
-  <div style="color:#cfcfff;margin-top:6px">Sets Your Blook To Custom • In-Game Only</div>
 </div>
 `;
-
 
 const editorContainer = document.createElement("div");
 editorContainer.className = "editorContainer";
 blookPage.appendChild(editorContainer);
-
 
 function createInput(label) {
   const wrap = document.createElement("div");
@@ -6570,14 +6558,12 @@ function createInput(label) {
   const l = document.createElement("label");
   l.textContent = label;
   l.style.color = "#fff";
-  l.style.fontSize = "0.9em";
   l.style.fontWeight = "600";
 
   const i = document.createElement("input");
   i.type = "number";
+  i.min = 0;
   i.value = 0;
-  i.min = 0;        // 🚫 no negatives
-  i.step = 1;
   i.className = "blookInput";
 
   wrap.append(l, i);
@@ -6601,21 +6587,14 @@ const parts = {
   eyebrowsColor: createInput("Eyebrows Color")
 };
 
-
 const previewBox = document.createElement("div");
 previewBox.className = "previewBox";
 
-const previewLabel = document.createElement("div");
-previewLabel.className = "previewLabel";
-previewLabel.textContent = "Select a part";
+const previewStack = document.createElement("div");
+previewStack.className = "previewStack";
 
-const previewImg = document.createElement("img");
-previewImg.style.maxWidth = "85%";
-previewImg.style.maxHeight = "85%";
-
-previewBox.append(previewLabel, previewImg);
+previewBox.appendChild(previewStack);
 blookPage.appendChild(previewBox);
-
 
 const GITHUB_BASE =
   "https://raw.githubusercontent.com/0alter0/blook-parts/241bda5908c9355caef55ac994b1c2ec21124eb7";
@@ -6627,72 +6606,55 @@ const PART_FOLDER_MAP = {
   glasses: "glasses",
   hair: "hair",
   hat: "hats",
-  item: "object",
-  mouth: "mouth",
+  item: "items",
+  mouth: "mouths",
   nose: "nose",
   cheeks: "cheeks",
   eyebrows: "eyebrows"
 };
 
-function getPreviewURL(part, id) {
-  if (!id || id <= 0) return "";
-  const folder = PART_FOLDER_MAP[part];
-  return folder ? `${GITHUB_BASE}/${folder}/item${id}.svg` : "";
-}
+const RENDER_ORDER = [
+  "base",
+  "clothing",
+  "cheeks",
+  "nose",
+  "eyes",
+  "eyebrows",
+  "mouth",
+  "glasses",
+  "hair",
+  "hat",
+  "item"
+];
 
+function renderStack() {
+  previewStack.innerHTML = "";
 
-let previewTimeout = null;
-let lastPreviewKey = "";
+  RENDER_ORDER.forEach(part => {
+    const input = parts[part];
+    if (!input) return;
 
-function queuePreviewUpdate(part, id) {
-  clearTimeout(previewTimeout);
+    const id = Number(input.value);
+    const folder = PART_FOLDER_MAP[part];
+    if (!folder) return;
 
-  previewTimeout = setTimeout(() => {
-    const key = `${part}:${id}`;
-    lastPreviewKey = key;
-
-    previewImg.dataset.key = key;
-    previewImg.src = getPreviewURL(part, id);
-  }, 120);
-}
-
-Object.entries(parts).forEach(([part, input]) => {
-  input.addEventListener("focus", () => {
-    previewLabel.textContent = part.toUpperCase();
-    queuePreviewUpdate(part, input.value);
-  });
-
-  input.addEventListener("input", () => {
-    if (document.activeElement === input) {
-      queuePreviewUpdate(part, input.value);
+    if (part === "base") {
+      if (id < 0) return;
+    } else {
+      if (id <= 0) return;
     }
+
+    const img = document.createElement("img");
+    img.src = `${GITHUB_BASE}/${folder}/item${id}.svg`;
+    img.onerror = () => img.remove();
+
+    previewStack.appendChild(img);
   });
-});
-
-previewImg.onerror = () => {
-  if (previewImg.dataset.key !== lastPreviewKey) return;
-  previewImg.src = "";
-  if (!previewLabel.textContent.includes("INVALID")) {
-    previewLabel.textContent += " (INVALID)";
-  }
-};
-
-previewImg.onload = () => {
-  previewLabel.textContent =
-    previewLabel.textContent.replace(" (INVALID)", "");
-};
-
+}
 
 const finalConfig = document.createElement("input");
 finalConfig.className = "finalConfigInput";
-finalConfig.placeholder = "Final Configuration String";
 blookPage.appendChild(finalConfig);
-
-const setBtn = document.createElement("button");
-setBtn.className = "blookBtn";
-setBtn.textContent = "Set Blook";
-blookPage.appendChild(setBtn);
-
 
 function updateConfig() {
   const v = Object.values(parts).map(i => i.value || 0);
@@ -6701,9 +6663,21 @@ function updateConfig() {
     `$${v[5]}#${v[6]}#${v[7]}#${v[8]}#${v[9]}` +
     `#${v[10]}#${v[11]}$${v[12]}`;
 }
-Object.values(parts).forEach(i => i.addEventListener("input", updateConfig));
-updateConfig();
 
+Object.values(parts).forEach(i => {
+  i.addEventListener("input", () => {
+    updateConfig();
+    renderStack();
+  });
+});
+
+updateConfig();
+renderStack();
+
+const setBtn = document.createElement("button");
+setBtn.className = "blookBtn";
+setBtn.textContent = "Set Blook";
+blookPage.appendChild(setBtn);
 
 setBtn.onclick = () => {
   const blook = finalConfig.value;
@@ -6719,6 +6693,7 @@ setBtn.onclick = () => {
     val: blook
   });
 };
+//Written by Lil Skittle
 
 
 
