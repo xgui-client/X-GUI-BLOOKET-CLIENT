@@ -46,7 +46,7 @@ console.log("%c Star the GitHub repo! %c https://github.com/xgui-client/X-GUI-BL
     const timeProcessed = 1747005941679;
     let latestProcess = -1;
     const cheat = (async () => {
-        const versionName = "6.63x";
+        const versionName = "6.64x";
         const gui = document.createElement("div");
         Object.assign(gui.style, {
             top: window.innerHeight / 2 - 250 + "px",
@@ -8810,6 +8810,7 @@ changelogPage.appendChild(title);
 
 // Versions array (30 versions, highest to lowest)
 const versions = [
+  ["Version 6.64x", "FIXED MOST GAMEMODES", "null"],
   ["Version 6.63x", "ADDED BLOOK EDITOR AND UPDATED MOBILE MODE", "null"],
   ["Version 6.62x", "ADDED ACCOUNT GENERATOR", "null"],
   ["Version 6.61x", "ADDED BLOOKET STREAM FINDER AND ALT MANAGER", "null"],
@@ -9404,7 +9405,7 @@ setBtn.onclick = () => {
 
         codingCredits.append(createCredit("GUI Design + Creation", "05Konz+XullysFN"));
         codingCredits.append(createCredit("Anti-Suspend", "CryptoDude3+XullysFN"));
-        codingCredits.append(createCredit("Blooket Cheats", 'gliz <i class="fas fa-long-arrow-alt-right"></i> Minesraft2 <i class="fas fa-long-arrow-alt-right"></i> 05Konz <i class="fas fa-long-arrow-alt-right"></i> XullysFN'));
+        codingCredits.append(createCredit("Blooket Cheats", 'gliz <i class="fas fa-long-arrow-alt-right"></i> Minesraft2 <i class="fas fa-long-arrow-alt-right"></i> 05Konz <i class="fas fa-long-arrow-alt-right"></i> XullysFN <i class="fas fa-long-arrow-alt-right"></i> redhorse26'));
 
         const creditLinks = document.createElement("ul");
         creditLinks.className = classes.creditLinks;
