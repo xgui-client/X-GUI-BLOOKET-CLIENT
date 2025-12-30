@@ -19,10 +19,11 @@
 (function() {
     'use strict';
 
-    /**
+
+ /**
  * @license AGPL-3.0
  * Blooket Cheats
- * Copyright (C) 2023-present 05Konz/Xullys
+ * Copyright (C) 2023-present 05Konz/Xullys/redhorse26
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
@@ -246,7 +247,7 @@ button,
         tile.style.overflow = "hidden";       // keeps images clipped cleanly
     });
 }
-
+const answerDatabase = {};
 // delay ensures elements exist
 setTimeout(roundGamemodeBoxes, 50);
 
@@ -1024,6 +1025,482 @@ window.addEventListener("beforeunload", () => {
                                 this.data = null;
                             }
                         },
+                    },{
+                        name: "Learn Auto Answer",
+                        description: "Toggles Learn Auto Answer on. This version works in the modes that auto answer doesnt work in, but can only learn answers if you've seen them before.",
+                        type: "toggle",
+                        enabled: false,
+                        data: null,
+                        run: function () {
+                            if (!this.enabled) {
+                                this.enabled = true;
+    (() => {
+    console.log("🧠 Learn Auto Answer v23 (UNBLOCKED)\n");
+    
+
+    // 1. AUTOMATICALLY SKIP FEEDBACK
+    function autoContinue() {
+        const feedbackContainer = document.querySelector('[class*="feedbackContainer"]');
+        const feedbackText = document.querySelector('[class*="feedbackText"]');
+        
+        // Check if feedback is actually visible/present
+        // We don't check body.textContent anymore because it lingers
+        const isFeedback = feedbackContainer || 
+                           (feedbackText && feedbackText.offsetParent !== null); // visible check
+
+        if (isFeedback) {
+            if (feedbackContainer) {
+                feedbackContainer.click();
+            } else {
+                document.body.click();
+            }
+            
+            const event = new KeyboardEvent('keydown', {
+                key: 'Enter',
+                code: 'Enter',
+                keyCode: 13,
+                which: 13,
+                bubbles: true
+            });
+            document.dispatchEvent(event);
+        }
+    }
+
+    // 2. LEARN FROM VISIBLE ANSWERS
+    function learn() {
+        const wrappers = document.querySelectorAll('[class*="questionWrapper"]');
+        
+        wrappers.forEach(wrapper => {
+            const questionTextEl = wrapper.querySelector('[class*="questionText"]');
+            if (!questionTextEl) return;
+
+            const question = questionTextEl.textContent.trim();
+
+            // --- CHECK 1: Multiple Choice ---
+            const correctBtn = Array.from(wrapper.querySelectorAll('[class*="answerButton"]')).find(btn => 
+                btn.innerHTML.includes('fa-check') || 
+                (btn.style.backgroundColor && btn.style.backgroundColor.includes('rgb(139, 220, 111)')) ||
+                (btn.querySelector('[class*="answerFront"]') && btn.querySelector('[class*="answerFront"]').style.backgroundColor.includes('rgb(139, 220, 111)'))
+            );
+
+            if (correctBtn) {
+                const answerTextEl = correctBtn.querySelector('[class*="answerText"]');
+                if (answerTextEl) {
+                    const answer = answerTextEl.textContent.trim();
+                    if (!answerDatabase[question]) {
+                        answerDatabase[question] = [answer];
+                        console.log(`✓ Learned (MC): "${question}" → "${answer}"`);
+                    }
+                }
+            }
+
+            // --- CHECK 2: Typing Questions ---
+            const rawTypingEls = Array.from(wrapper.querySelectorAll('[class*="typingFeedbackAnswer"]'));
+            
+            // Filter carefully using getAttribute to avoid SVG crash
+            const realTypingAnswers = rawTypingEls.filter(el => {
+                const cls = el.getAttribute('class') || "";
+                return !cls.includes('Answers') && !cls.includes('Icon');
+            });
+
+            if (realTypingAnswers.length > 0) {
+                const answer = realTypingAnswers[0].textContent.trim();
+                
+                if (!answerDatabase[question]) {
+                    answerDatabase[question] = [answer];
+                    console.log(`✓ Learned (Typing): "${question}" → "${answer}"`);
+                }
+            }
+        });
+    }
+
+    // 3. ANSWER ACTIVE QUESTION
+    function answer() {
+        const wrappers = document.querySelectorAll('[class*="questionWrapper"]');
+        if (wrappers.length === 0) return;
+
+        // The active question is usually the last one, but verify it's not sliding out
+        let activeWrapper = wrappers[wrappers.length - 1];
+        if (activeWrapper.className.includes('slideOut') && wrappers.length > 1) {
+            // If the last one is sliding out, maybe we shouldn't act yet, 
+            // OR if there's another one, that's the slideIn? 
+            // Usually Blooket appends the NEW wrapper last. 
+            // We'll stick to last for now, but remove the blocker.
+        }
+
+        const questionTextEl = activeWrapper.querySelector('[class*="questionText"]');
+        if (!questionTextEl) return;
+
+        const question = questionTextEl.textContent.trim();
+
+        if (answerDatabase[question]) {
+            const knownAnswer = answerDatabase[question][0];
+
+            // --- MC Handling ---
+            const buttons = activeWrapper.querySelectorAll('[class*="answerButton"]');
+            if (buttons.length > 0) {
+                for (const btn of buttons) {
+                    const btnTextEl = btn.querySelector('[class*="answerText"]');
+                    // Ensure we don't click disabled buttons
+                    if (btnTextEl && btnTextEl.textContent.trim() === knownAnswer && !btn.className.includes('Disabled')) {
+                        console.log(`🎯 Answering (MC): "${question}"`);
+                        btn.click();
+                        return;
+                    }
+                }
+            }
+
+            // --- Typing Handling ---
+            const input = activeWrapper.querySelector('input[class*="typingAnswerInput"]');
+            if (input && !input.disabled) {
+                
+                // 1. Fill the box if it's wrong/empty
+                if (input.value !== knownAnswer) {
+                    console.log(`🎯 Typing: "${knownAnswer}"`);
+                    
+                    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                    nativeInputValueSetter.call(input, knownAnswer);
+                    
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+                // 2. Click submit (Always try to click if input is visible/enabled)
+                // We used to only click if we changed value, but if the first click failed, we got stuck.
+                // Now we try clicking submit every cycle until the input disappears/disables.
+                const submitBtn = activeWrapper.querySelector('button[class*="typingAnswerButton"]');
+                if (submitBtn) {
+                    // Small throttle to avoid 1000 clicks/sec
+                    if (!submitBtn._lastClick || Date.now() - submitBtn._lastClick > 200) {
+                        console.log(`🎯 Submitting Typing...`);
+                        submitBtn.click();
+                        submitBtn._lastClick = Date.now();
+                    }
+                }
+            }
+        }
+    }
+    this.data=setInterval(() => {
+        autoContinue();
+        learn();
+        answer();
+    }, 50);
+})();
+                            } else {
+                                this.enabled = false;
+                                clearInterval(this.data);
+                                this.data = null;
+                            }
+                        },
+                    },{
+                        name: "Learn Highlight Answer",
+                        description: "Toggles Learn Highlight Answer on. This version works in the modes that highlight answers doesnt work in, but can only learn answers if you've seen them before.",
+                        type: "toggle",
+                        enabled: false,
+                        data: null,
+                        run: function () {
+                            if (!this.enabled) {
+                                this.enabled = true;
+                                (() => {
+    console.log("🎨 Highlight Answers Active (Green = Correct, Red = Wrong)\n");
+
+    // 1. AUTOMATICALLY SKIP FEEDBACK
+    function autoContinue() {
+        const feedbackContainer = document.querySelector('[class*="feedbackContainer"]');
+        const feedbackText = document.querySelector('[class*="feedbackText"]');
+        
+        const isFeedback = feedbackContainer || 
+                           (feedbackText && feedbackText.offsetParent !== null);
+
+        if (isFeedback) {
+            if (feedbackContainer) {
+                feedbackContainer.click();
+            } else {
+                document.body.click();
+            }
+            
+            const event = new KeyboardEvent('keydown', {
+                key: 'Enter',
+                code: 'Enter',
+                keyCode: 13,
+                which: 13,
+                bubbles: true
+            });
+            document.dispatchEvent(event);
+        }
+    }
+
+    // 2. LEARN ANSWERS (Same robust logic as before)
+    function learn() {
+        const wrappers = document.querySelectorAll('[class*="questionWrapper"]');
+        
+        wrappers.forEach(wrapper => {
+            const questionTextEl = wrapper.querySelector('[class*="questionText"]');
+            if (!questionTextEl) return;
+
+            const question = questionTextEl.textContent.trim();
+
+            // MC Check
+            const correctBtn = Array.from(wrapper.querySelectorAll('[class*="answerButton"]')).find(btn => 
+                btn.innerHTML.includes('fa-check') || 
+                (btn.style.backgroundColor && btn.style.backgroundColor.includes('rgb(139, 220, 111)')) ||
+                (btn.querySelector('[class*="answerFront"]') && btn.querySelector('[class*="answerFront"]').style.backgroundColor.includes('rgb(139, 220, 111)'))
+            );
+
+            if (correctBtn) {
+                const answerTextEl = correctBtn.querySelector('[class*="answerText"]');
+                if (answerTextEl) {
+                    const answer = answerTextEl.textContent.trim();
+                    if (!answerDatabase[question]) {
+                        answerDatabase[question] = [answer];
+                        console.log(`✓ Learned: "${question}" → "${answer}"`);
+                    }
+                }
+            }
+
+            // Typing Check
+            const rawTypingEls = Array.from(wrapper.querySelectorAll('[class*="typingFeedbackAnswer"]'));
+            const realTypingAnswers = rawTypingEls.filter(el => {
+                const cls = el.getAttribute('class') || "";
+                return !cls.includes('Answers') && !cls.includes('Icon');
+            });
+
+            if (realTypingAnswers.length > 0) {
+                const answer = realTypingAnswers[0].textContent.trim();
+                if (!answerDatabase[question]) {
+                    answerDatabase[question] = [answer];
+                    console.log(`✓ Learned: "${question}" → "${answer}"`);
+                }
+            }
+        });
+    }
+
+    // 3. HIGHLIGHT CORRECT ANSWER
+    function highlight() {
+        const wrappers = document.querySelectorAll('[class*="questionWrapper"]');
+        if (wrappers.length === 0) return;
+
+        // Active question is last wrapper
+        const activeWrapper = wrappers[wrappers.length - 1];
+        
+        // Don't highlight during feedback/slideOut
+        if (activeWrapper.className.includes('slideOut')) return;
+
+        const questionTextEl = activeWrapper.querySelector('[class*="questionText"]');
+        if (!questionTextEl) return;
+
+        const question = questionTextEl.textContent.trim();
+
+        if (answerDatabase[question]) {
+            const knownAnswer = answerDatabase[question][0];
+
+            // --- MC HIGHLIGHTING ---
+            const buttons = activeWrapper.querySelectorAll('[class*="answerButton"]');
+            if (buttons.length > 0) {
+                buttons.forEach(btn => {
+                    const textEl = btn.querySelector('[class*="answerText"]');
+                    if (!textEl) return;
+
+                    const text = textEl.textContent.trim();
+                    const front = btn.querySelector('[class*="answerFront"]');
+                    const back = btn.querySelector('[class*="answerBack"]');
+                    
+                    // Define Colors
+                    const correctColor = '#00ff00'; // Lime Green
+                    const wrongColor = '#ff0000';   // Red
+
+                    if (text === knownAnswer) {
+                        // Make Correct GREEN
+                        if (front) {
+                            front.style.backgroundColor = correctColor;
+                            front.style.color = 'black'; // Ensure text is readable
+                        }
+                        if (back) back.style.backgroundColor = '#00cc00'; // Darker green for 3D effect
+                    } else {
+                        // Make Wrong RED
+                        if (front) {
+                            front.style.backgroundColor = wrongColor;
+                            front.style.opacity = '0.7'; // Dim it slightly
+                        }
+                        if (back) back.style.backgroundColor = '#cc0000';
+                    }
+                });
+            }
+
+            // --- TYPING HIGHLIGHTING ---
+            const input = activeWrapper.querySelector('input[class*="typingAnswerInput"]');
+            if (input) {
+                // 1. Change Placeholder
+                input.setAttribute('placeholder', `ANSWER: ${knownAnswer}`);
+                
+                // 2. Change Subheader Text (Usually says "not case sensitive")
+                const subHeader = activeWrapper.querySelector('[class*="typingAnswerSubheader"]');
+                if (subHeader) {
+                    subHeader.textContent = `ANSWER: ${knownAnswer}`;
+                    subHeader.style.color = '#00ff00';
+                    subHeader.style.fontWeight = 'bold';
+                    subHeader.style.fontSize = '20px';
+                }
+            }
+        }
+    }
+
+    // Loop
+    this.data = setInterval(() => {
+        autoContinue();
+        learn();
+        highlight();
+    }, 100); // 100ms is plenty for visual updates
+
+    console.log("✅ Highlighting Active. Play manually to populate database.");
+})();
+
+                            } else {
+                                this.enabled = false;
+                                clearInterval(this.data);
+                                this.data = null;
+                            }
+                        },
+                    },{
+                        name: "Learn Subtle Highlight Answers",
+                        description: "Toggles auto answer on",
+                        type: "toggle",
+                        enabled: false,
+                        data: null,
+                        run: function () {
+                            if (!this.enabled) {
+                                this.enabled = true;
+                                (() => {
+    console.log("🕵️ Subtle Highlight Active (Flat Button = Correct)\n");
+
+
+    function autoContinue() {
+        const feedbackContainer = document.querySelector('[class*="feedbackContainer"]');
+        const feedbackText = document.querySelector('[class*="feedbackText"]');
+
+        const isFeedback = feedbackContainer || 
+                           (feedbackText && feedbackText.offsetParent !== null);
+
+        if (isFeedback) {
+            if (feedbackContainer) {
+                feedbackContainer.click();
+            } else {
+                document.body.click();
+            }
+
+            const event = new KeyboardEvent('keydown', {
+                key: 'Enter',
+                code: 'Enter',
+                keyCode: 13,
+                which: 13,
+                bubbles: true
+            });
+            document.dispatchEvent(event);
+        }
+    }
+
+    function learn() {
+        const wrappers = document.querySelectorAll('[class*="questionWrapper"]');
+
+        wrappers.forEach(wrapper => {
+            const questionTextEl = wrapper.querySelector('[class*="questionText"]');
+            if (!questionTextEl) return;
+
+            const question = questionTextEl.textContent.trim();
+
+            const correctBtn = Array.from(wrapper.querySelectorAll('[class*="answerButton"]')).find(btn => 
+                btn.innerHTML.includes('fa-check') || 
+                (btn.style.backgroundColor && btn.style.backgroundColor.includes('rgb(139, 220, 111)')) ||
+                (btn.querySelector('[class*="answerFront"]') && btn.querySelector('[class*="answerFront"]').style.backgroundColor.includes('rgb(139, 220, 111)'))
+            );
+
+            if (correctBtn) {
+                const answerTextEl = correctBtn.querySelector('[class*="answerText"]');
+                if (answerTextEl) {
+                    const answer = answerTextEl.textContent.trim();
+                    if (!answerDatabase[question]) {
+                        answerDatabase[question] = [answer];
+                        console.log(`✓ Learned: "${question}" → "${answer}"`);
+                    }
+                }
+            }
+
+            const rawTypingEls = Array.from(wrapper.querySelectorAll('[class*="typingFeedbackAnswer"]'));
+            const realTypingAnswers = rawTypingEls.filter(el => {
+                const cls = el.getAttribute('class') || "";
+                return !cls.includes('Answers') && !cls.includes('Icon');
+            });
+
+            if (realTypingAnswers.length > 0) {
+                const answer = realTypingAnswers[0].textContent.trim();
+                if (!answerDatabase[question]) {
+                    answerDatabase[question] = [answer];
+                    console.log(`✓ Learned: "${question}" → "${answer}"`);
+                }
+            }
+        });
+    }
+
+    function highlight() {
+        const wrappers = document.querySelectorAll('[class*="questionWrapper"]');
+        if (wrappers.length === 0) return;
+
+        const activeWrapper = wrappers[wrappers.length - 1];
+        if (activeWrapper.className.includes('slideOut')) return;
+
+        const questionTextEl = activeWrapper.querySelector('[class*="questionText"]');
+        if (!questionTextEl) return;
+
+        const question = questionTextEl.textContent.trim();
+
+        if (answerDatabase[question]) {
+            const knownAnswer = answerDatabase[question][0];
+
+            const buttons = activeWrapper.querySelectorAll('[class*="answerButton"]');
+            if (buttons.length > 0) {
+                buttons.forEach(btn => {
+                    const textEl = btn.querySelector('[class*="answerText"]');
+                    if (!textEl) return;
+
+                    const text = textEl.textContent.trim();
+                    const back = btn.querySelector('[class*="answerBack"]');
+
+                    if (back) {
+                        if (text === knownAnswer) {
+
+                            back.style.display = 'none'; 
+
+                        } else {
+
+                            back.style.display = ''; 
+                        }
+                    }
+                });
+            }
+
+            const input = activeWrapper.querySelector('input[class*="typingAnswerInput"]');
+            if (input) {
+                input.setAttribute('placeholder', knownAnswer);
+            }
+        }
+    }
+
+    this.data = setInterval(() => {
+        autoContinue();
+        learn();
+        highlight();
+    }, 100);
+
+    console.log("✅ Subtle Highlight Active.");
+})();
+
+
+                            } else {
+                                this.enabled = false;
+                                clearInterval(this.data);
+                                this.data = null;
+                            }
+                        },
                     },
                     {
 
@@ -1674,6 +2151,7 @@ window.addEventListener("beforeunload", () => {
                 })
             }
         }, {
+           
 
 
 
@@ -4197,6 +4675,146 @@ name: "Set Next Fish",
                         },
                     },
                 ],
+            },fishsolo: {
+                img: "https://media.blooket.com/image/upload/v1663212881/Media/logos/Fishing_Frenzy_Logo_Resized.png",
+                name: "Fishing Frenzy (Solo Mode)",
+                cheats: [
+                    {
+                        name: "Set Lure",
+                        description: "Sets your lure level",
+                        type: "button",
+                        inputs: [
+                            {
+                                name: "Lure (1 - 5)",
+                                type: "number",
+                                min: 1,
+                                max: 5,
+                            },
+                        ],
+                        run: function (lure) {
+(() => {
+    let iframe = document.createElement('iframe');
+    document.body.append(iframe);
+    const input = lure;
+    iframe.remove();
+
+    if (!input) return;
+    const targetInternal = parseInt(input) - 1; // UI Level 1-5 -> Internal 0-4
+    if (isNaN(targetInternal) || targetInternal < 0 || targetInternal > 4) {
+        return alert("❌ Please enter a number between 1 and 5.");
+    }
+
+    const root = document.querySelector('#app') || document.body;
+    const rKey = Object.keys(root).find(k => k.startsWith('__reactFiber'));
+    if (!rKey) return;
+
+    let success = false;
+
+    function findAndDispatch(node) {
+        if (success || !node) return;
+        if (node.memoizedProps && typeof node.memoizedProps.lureLevel === 'number') {
+            const currentLevel = node.memoizedProps.lureLevel;
+            let parent = node.return;
+            while (parent) {
+                if (parent.memoizedState) {
+                    let hook = parent.memoizedState;
+                    let i = 0;
+                    while (hook) {
+                        if (i === 2 && hook.queue?.dispatch) {
+                            if (hook.memoizedState === currentLevel) {
+                                hook.queue.dispatch(targetInternal);
+                                success = true;
+                                return;
+                            }
+                        }
+                        hook = hook.next;
+                        i++;
+                    }
+                }
+                parent = parent.return;
+            }
+        }
+        findAndDispatch(node.child);
+        findAndDispatch(node.sibling);
+    }
+
+    findAndDispatch(root[rKey]);
+
+    if (success) {
+        alert(`✅ Lure Level permanently set to ${targetInternal + 1}!`);
+    } else {
+        alert("❌ Could not find Lure State Hook. Try catching one fish first.");
+    }
+})();
+
+
+                        },
+                    },{
+                        name: "Set Weight",
+                        description: "Sets your weight",
+                        type: "button",
+                        inputs: [
+                            {
+                                name: "Weight",
+                                type: "number"
+                            },
+                        ],
+                        run: function (weight) {
+                            
+(() => {
+
+    let iframe = document.createElement('iframe');
+    document.body.append(iframe);
+    const input = weight;
+    iframe.remove();
+
+    if (!input) return;
+    const NEW_WEIGHT = parseFloat(input);
+
+    const root = document.querySelector('#app') || document.body;
+    const rKey = Object.keys(root).find(k => k.startsWith('__reactFiber'));
+    if (!rKey) return console.log("❌ React Root not found");
+
+    let success = false;
+
+    function findAndSet(node) {
+        if (success || !node) return;
+
+        if (node.memoizedState) {
+            let hook = node.memoizedState;
+            let i = 0;
+            while (hook) {
+
+                if (i === 2 && hook.queue?.dispatch) {
+                    const currentVal = hook.memoizedState;
+
+                    if (typeof currentVal === 'number') {
+                        hook.queue.dispatch(NEW_WEIGHT);
+                        success = true;
+                        return;
+                    }
+                }
+                hook = hook.next;
+                i++;
+            }
+        }
+        findAndSet(node.child);
+        findAndSet(node.sibling);
+    }
+
+    findAndSet(root[rKey]);
+
+    if (success) {
+        alert(`✅ Weight set to ${NEW_WEIGHT.toLocaleString()}!\n\nCatch a fish to update the UI.`);
+    } else {
+        alert("❌ Could not find Weight Hook. Catch one fish first!");
+    }
+})();
+
+                        },
+                    }
+                ]
+            
             },
             pirate: {
                 img: "https://media.blooket.com/image/upload/v1695317816/Media/logos/PiratesVoyageLogoSmall.png",
@@ -4364,24 +4982,155 @@ name: "Set Next Fish",
                         name: "Max Tower Stats",
                         description: "Makes all placed towers overpowered",
                         run: function () {
-                            getStateNode().state.towers.forEach((tower) => {
-                                tower.stats.dmg = 1e6;
-                                tower.stats.fireRate = 50;
-                                tower.stats.ghostDetect = true;
-                                tower.stats.maxTargets = 1e6;
-                                tower.stats.numProjectiles &&= 100;
-                                tower.stats.range = 100;
-                                if (tower.stats.auraBuffs) for (const buff in tower.stats.auraBuffs) tower.stats.auraBuffs[buff] *= 100;
-                            });
+                            (() => {
+
+    let iframe = document.createElement('iframe');
+    document.body.append(iframe);
+    window.alert = iframe.contentWindow.alert.bind(window);
+    iframe.remove();
+
+    function withScene(callback) {
+        if (window._SCENE && window._SCENE.sys && window._SCENE.sys.isActive()) {
+            callback(window._SCENE);
+            return;
+        }
+        let found = false;
+        const originalUpdate = window.Phaser.Scenes.SceneManager.prototype.update;
+        window.Phaser.Scenes.SceneManager.prototype.update = function(time, delta) {
+            originalUpdate.call(this, time, delta);
+            if (found) return;
+            for (const scene of this.scenes) {
+                if (scene.sys.isActive() && scene.sys.settings.key !== 'Boot') {
+                    window._SCENE = scene;
+                    found = true;
+                    window.Phaser.Scenes.SceneManager.prototype.update = originalUpdate;
+                    callback(scene);
+                    return;
+                }
+            }
+        };
+    }
+
+    withScene((scene) => {
+        const service = scene.towerService;
+
+        if (!service || !service.towers) {
+            alert("❌ Tower Service not found!");
+            return;
+        }
+
+        const towersDict = service.towers;
+        let totalUpgraded = 0;
+
+        Object.keys(towersDict).forEach(typeKey => {
+            const group = towersDict[typeKey];
+
+            let towers = [];
+            if (group.getChildren) towers = group.getChildren();
+            else if (group.children && group.children.entries) towers = group.children.entries;
+            else if (Array.isArray(group)) towers = group;
+
+            towers.forEach(tower => {
+
+                tower.cd = 0; 
+                tower.fullCd = 1; 
+
+                if (tower.stats) {
+                    tower.stats.dmg = 1e+10;      
+
+                    tower.stats.range = 1e+10;       
+
+                    tower.stats.fireRate = 1e+10;      
+
+                    tower.stats.ghostDetect = true; 
+
+                    tower.stats.maxTargets = 1e+10;  
+
+                    if (tower.stats.numProjectiles) {
+                        tower.stats.numProjectiles = 100;
+                    }
+                }
+
+                if (tower.rangeCircle) {
+                    tower.rangeCircle.radius = 1000;
+                }
+
+                totalUpgraded++;
+            });
+        });
+
+        if (totalUpgraded > 0) {
+            alert(`✅ Upgraded ${totalUpgraded} towers (DMG, Range, Ghost Hit)!`);
+        } else {
+            alert("⚠️ No active towers found.");
+        }
+    });
+})();
+
+
                         },
                     },
                     {
                         name: "Kill Enemies",
                         description: "Kills all the enemies",
                         run: function () {
-                            let stateNode = getStateNode();
-                            stateNode.game.current.config.sceneConfig.enemyQueue.length = 0;
-                            stateNode.game.current.config.sceneConfig.physics.world.bodies.entries.forEach((x) => x?.gameObject?.receiveDamage?.(x.gameObject.hp, 1));
+(() => { 
+    let iframe = document.createElement('iframe');
+    document.body.append(iframe);
+    window.alert = iframe.contentWindow.alert.bind(window);
+    iframe.remove();
+
+    function withScene(callback) {
+        if (window._SCENE && window._SCENE.sys && window._SCENE.sys.isActive()) {
+            callback(window._SCENE);
+            return;
+        }
+        let found = false;
+        const originalUpdate = window.Phaser.Scenes.SceneManager.prototype.update;
+        window.Phaser.Scenes.SceneManager.prototype.update = function(time, delta) {
+            originalUpdate.call(this, time, delta);
+            if (found) return;
+            for (const scene of this.scenes) {
+                if (scene.sys.isActive() && scene.sys.settings.key !== 'Boot') {
+                    window._SCENE = scene;
+                    found = true;
+                    window.Phaser.Scenes.SceneManager.prototype.update = originalUpdate;
+                    callback(scene);
+                    return;
+                }
+            }
+        };
+    }
+
+    withScene((scene) => {
+        const enemyService = scene.enemyService;
+        if (!enemyService) {
+            alert("Enemy Service not found!");
+            return;
+        }
+
+        if (enemyService.enemyQueue) {
+            enemyService.enemyQueue.length = 0;
+            console.log("Cleared enemy queue");
+        }
+
+        if (enemyService.enemies?.children?.entries) {
+            let killed = 0;
+            enemyService.enemies.children.entries.forEach(enemy => {
+                if (enemy && enemy.hp && enemy.takeDamage) {
+                    enemy.takeDamage(enemy.hp);
+                    killed++;
+                }
+            });
+            console.log(`Killed ${killed} enemies`);
+            alert(`Killed ${killed} enemies!`);
+        } else {
+            alert("No enemies found");
+        }
+    });
+})();
+
+
                         },
                     },
                     {
@@ -4394,7 +5143,60 @@ name: "Set Next Fish",
                             },
                         ],
                         run: function (coins) {
-                            getStateNode().setState({ coins });
+                            
+(() => {
+
+    let iframe = document.createElement('iframe');
+    document.body.append(iframe);
+    window.alert = iframe.contentWindow.alert.bind(window);
+    window.prompt = iframe.contentWindow.prompt.bind(window);
+    iframe.remove();
+
+    function withScene(callback) {
+        if (window._SCENE && window._SCENE.sys && window._SCENE.sys.isActive()) {
+            callback(window._SCENE);
+            return;
+        }
+        let found = false;
+        const originalUpdate = window.Phaser.Scenes.SceneManager.prototype.update;
+        window.Phaser.Scenes.SceneManager.prototype.update = function(time, delta) {
+            originalUpdate.call(this, time, delta);
+            if (found) return;
+            for (const scene of this.scenes) {
+                if (scene.sys.isActive() && scene.sys.settings.key !== 'Boot') {
+                    window._SCENE = scene;
+                    found = true;
+                    window.Phaser.Scenes.SceneManager.prototype.update = originalUpdate;
+                    callback(scene);
+                    return;
+                }
+            }
+        };
+    }
+
+    withScene((scene) => {
+        const manager = scene.gameManager;
+
+        if (!manager) {
+            alert("❌ Game Manager not found! (Wait for game to load)");
+            return;
+        }
+
+        const current = manager.coins;
+        const input = coins;
+
+        if (input !== null) {
+            const amount = parseInt(input);
+            if (!isNaN(amount)) {
+                manager.coins = amount;
+
+                alert(`✅ Coins set to ${amount}!\n\nNote: Buy something to update the display counter.`);
+            }
+        }
+    });
+})();
+
+
                         },
                     },
                     {
@@ -4407,7 +5209,62 @@ name: "Set Next Fish",
                             },
                         ],
                         run: function (health) {
-                            getStateNode().setState({ health });
+(() => {
+
+    let iframe = document.createElement('iframe');
+    document.body.append(iframe);
+    window.alert = iframe.contentWindow.alert.bind(window);
+    window.prompt = iframe.contentWindow.prompt.bind(window);
+    iframe.remove();
+
+    function withScene(callback) {
+        if (window._SCENE && window._SCENE.sys && window._SCENE.sys.isActive()) {
+            callback(window._SCENE);
+            return;
+        }
+        let found = false;
+        const originalUpdate = window.Phaser.Scenes.SceneManager.prototype.update;
+        window.Phaser.Scenes.SceneManager.prototype.update = function(time, delta) {
+            originalUpdate.call(this, time, delta);
+            if (found) return;
+            for (const scene of this.scenes) {
+                if (scene.sys.isActive() && scene.sys.settings.key !== 'Boot') {
+                    window._SCENE = scene;
+                    found = true;
+                    window.Phaser.Scenes.SceneManager.prototype.update = originalUpdate;
+                    callback(scene);
+                    return;
+                }
+            }
+        };
+    }
+
+    withScene((scene) => {
+        const manager = scene.gameManager;
+
+        if (!manager) {
+            alert("❌ Game Manager not found!");
+            return;
+        }
+
+        let healthTarget = manager;
+        if (manager.health === undefined && scene.gameData && scene.gameData.health !== undefined) {
+            healthTarget = scene.gameData;
+        }
+
+        const current = healthTarget.health;
+        const input = health;
+
+        if (input !== null) {
+            const amount = parseInt(input);
+            if (!isNaN(amount)) {
+                healthTarget.health = amount;
+
+                alert(`✅ Health set to ${amount}!\n\nNote: only changes the health that it shows if you take any damage.`);
+            }
+        }
+    });
+})();
                         },
                     },
                     {
@@ -4420,7 +5277,65 @@ name: "Set Next Fish",
                             },
                         ],
                         run: function (round) {
-                            getStateNode().setState({ round });
+(() => {
+
+    let iframe = document.createElement('iframe');
+    document.body.append(iframe);
+    window.alert = iframe.contentWindow.alert.bind(window);
+    window.prompt = iframe.contentWindow.prompt.bind(window);
+    iframe.remove();
+
+    function withScene(callback) {
+        if (window._SCENE && window._SCENE.sys && window._SCENE.sys.isActive()) {
+            callback(window._SCENE);
+            return;
+        }
+        let found = false;
+        const originalUpdate = window.Phaser.Scenes.SceneManager.prototype.update;
+        window.Phaser.Scenes.SceneManager.prototype.update = function(time, delta) {
+            originalUpdate.call(this, time, delta);
+            if (found) return;
+            for (const scene of this.scenes) {
+                if (scene.sys.isActive() && scene.sys.settings.key !== 'Boot') {
+                    window._SCENE = scene;
+                    found = true;
+                    window.Phaser.Scenes.SceneManager.prototype.update = originalUpdate;
+                    callback(scene);
+                    return;
+                }
+            }
+        };
+    }
+
+    withScene((scene) => {
+        const enemyService = scene.enemyService;
+
+        if (!enemyService) {
+            alert("❌ Enemy Service not found! (Wait for game to load)");
+            return;
+        }
+
+        const current = enemyService.waveNum;
+        const input = round;
+
+        if (input !== null) {
+            const amount = parseInt(input);
+            if (!isNaN(amount)) {
+
+                enemyService.waveNum = amount;
+
+                alert(`✅ Round/Wave set to ${amount}!\n\nNote: You must finish the current wave for the game to jump to the new round.`);
+
+                if (enemyService.isWaveActive === false) {
+
+                    if (scene.hud && scene.hud.updateWave) scene.hud.updateWave();
+                }
+            }
+        }
+    });
+})();
+
+
                         },
                     },
                 ],
@@ -4433,113 +5348,919 @@ name: "Set Next Fish",
                         name: "Double Enemy XP",
                         description: "Doubles enemy XP drop value",
                         run: function () {
-                            const colliders = getStateNode().game.current.config.sceneConfig.physics.world.colliders._active.filter((x) => x.callbackContext?.toString?.()?.includes?.("dmgCd"));
-                            for (let i = 0; i < colliders.length; i++) {
-                                const enemies = colliders[i].object2;
-                                let _start = enemies.classType.prototype.start;
-                                enemies.classType.prototype.start = function () {
-                                    _start.apply(this, arguments);
-                                    this.val *= 2;
-                                };
-                                enemies.children.entries.forEach((e) => (e.val *= 2));
-                            }
+(() => {
+    console.log("💎 Double Enemy XP - Continuous Mode\n");
+
+    if (!window.Phaser) {
+        alert("Phaser not found!");
+        return;
+    }
+
+    console.log("✓ Phaser", window.Phaser.VERSION);
+
+    let totalModified = 0;
+    window._processedEnemies = window._processedEnemies || new Set();
+
+    if (window.Phaser.GameObjects?.Group?.prototype && !window._groupHooked) {
+        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+                              window.Phaser.GameObjects.Group.prototype.update;
+
+        if (originalUpdate) {
+            window.Phaser.GameObjects.Group.prototype.preUpdate = function(...args) {
+                if (!window._groups) window._groups = new Set();
+                window._groups.add(this);
+                return originalUpdate?.apply(this, args);
+            };
+            console.log("✓ Group hook installed");
+            window._groupHooked = true;
+        }
+    }
+
+    const monitor = setInterval(() => {
+        if (!window._groups) return;
+
+        window._groups.forEach(group => {
+            if (!group.children?.entries) return;
+
+            group.children.entries.forEach(enemy => {
+
+                if (window._processedEnemies.has(enemy)) return;
+
+                if (enemy.val !== undefined && enemy.val !== null) {
+                    const oldVal = enemy.val;
+                    enemy.val *= 2;
+                    window._processedEnemies.add(enemy);
+                    totalModified++;
+
+                    if (totalModified <= 10) {
+                        console.log(`✓ Doubled enemy: ${oldVal} → ${enemy.val}`);
+                    }
+                }
+            });
+        });
+
+    }, 5);
+
+    setTimeout(() => {
+        console.log("\n=== STATUS ===");
+        console.log(`Enemies modified: ${totalModified}`);
+
+        if (totalModified > 0) {
+            console.log("\n✅ DOUBLE XP ACTIVE!");
+            alert(`✅ Double Enemy XP Activated!\n\n${totalModified} enemies modified!\n\n🔄 Continuous monitoring: New enemies auto-doubled every 5ms`);
+        }
+
+        console.log("\n🔄 Continuous monitoring active (every 5ms)");
+    }, 2000);
+
+    console.log("⏳ Monitoring started...");
+    console.log("Play the game normally!");
+
+    window._xpMonitor = monitor;
+})();
+
+
                         },
                     },
                     {
                         name: "Half Enemy Speed",
                         description: "Makes enemies move 2x slower",
                         run: function () {
-                            const colliders = getStateNode().game.current.config.sceneConfig.physics.world.colliders._active.filter((x) => x.callbackContext?.toString?.()?.includes?.("dmgCd"));
-                            for (let i = 0; i < colliders.length; i++) {
-                                const enemies = colliders[i].object2;
-                                let _start = enemies.classType.prototype.start;
-                                enemies.classType.prototype.start = function () {
-                                    _start.apply(this, arguments);
-                                    this.speed *= 0.5;
-                                };
-                                enemies.children.entries.forEach((e) => (e.speed *= 0.5));
-                            }
+(() => {
+    console.log("🐌 Half Enemy Speed - Continuous Mode\n");
+
+    if (!window.Phaser) {
+        alert("Phaser not found!");
+        return;
+    }
+
+    console.log("✓ Phaser", window.Phaser.VERSION);
+
+    let totalSlowed = 0;
+    window._processedSpeeds = window._processedSpeeds || new Set();
+
+    if (window.Phaser.GameObjects?.Group?.prototype && !window._groupHookedSpeed) {
+        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+                              window.Phaser.GameObjects.Group.prototype.update;
+
+        if (originalUpdate) {
+            window.Phaser.GameObjects.Group.prototype.preUpdate = function(...args) {
+                if (!window._groups) window._groups = new Set();
+                window._groups.add(this);
+                return originalUpdate?.apply(this, args);
+            };
+            console.log("✓ Group hook installed");
+            window._groupHookedSpeed = true;
+        }
+    }
+
+    const monitor = setInterval(() => {
+        if (!window._groups) return;
+
+        window._groups.forEach(group => {
+            if (!group.children?.entries) return;
+
+            group.children.entries.forEach(enemy => {
+
+                if (window._processedSpeeds.has(enemy)) return;
+
+                if (enemy.speed !== undefined && enemy.speed !== null) {
+                    const oldSpeed = enemy.speed;
+                    enemy.speed *= 0.5;
+                    window._processedSpeeds.add(enemy);
+                    totalSlowed++;
+
+                    if (totalSlowed <= 10) {
+                        console.log(`✓ Slowed enemy: ${oldSpeed} → ${enemy.speed}`);
+                    }
+                }
+            });
+        });
+
+    }, 5);
+
+    setTimeout(() => {
+        console.log("\n=== STATUS ===");
+        console.log(`Enemies slowed: ${totalSlowed}`);
+
+        if (totalSlowed > 0) {
+            console.log("\n✅ HALF SPEED ACTIVE!");
+            alert(`✅ Half Enemy Speed Activated!\n\n${totalSlowed} enemies slowed!\n\n🔄 Continuous monitoring: New enemies auto-slowed every 5ms`);
+        }
+
+        console.log("\n🔄 Continuous monitoring active (every 5ms)");
+    }, 2000);
+
+    console.log("⏳ Monitoring started...");
+    console.log("Play the game normally!");
+
+    window._speedMonitor = monitor;
+})();
+
+
                         },
                     },
                     {
                         name: "Instant Kill",
                         description: "Sets all enemies health to 1",
                         run: function () {
-                            const colliders = getStateNode().game.current.config.sceneConfig.physics.world.colliders._active.filter((x) => x.callbackContext?.toString?.()?.includes?.("dmgCd"));
-                            for (let i = 0; i < colliders.length; i++) {
-                                const enemies = colliders[i].object2;
-                                let _start = enemies.classType.prototype.start;
-                                enemies.classType.prototype.start = function () {
-                                    _start.apply(this, arguments);
-                                    this.hp = 1;
-                                };
-                                enemies.children.entries.forEach((e) => (e.hp = 1));
+(() => {
+    console.log("⚡ Instant Kill - Continuous Mode\n");
+
+    if (!window.Phaser) {
+        alert("❌ Phaser not found! Make sure you're in Monster Brawl.");
+        return;
+    }
+
+    console.log("✓ Phaser", window.Phaser.VERSION);
+
+    let totalModified = 0;
+    window._processedInstantKill = window._processedInstantKill || new Set();
+
+    if (window.Phaser.GameObjects?.Group?.prototype && !window._groupHookedInstantKill) {
+        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+                              window.Phaser.GameObjects.Group.prototype.update;
+
+        if (originalUpdate) {
+            window.Phaser.GameObjects.Group.prototype.preUpdate = function(...args) {
+                if (!window._groups) window._groups = new Set();
+                window._groups.add(this);
+                return originalUpdate?.apply(this, args);
+            };
+            console.log("✓ Group hook installed");
+            window._groupHookedInstantKill = true;
+        }
+    }
+
+    if (window.Phaser.GameObjects?.GameObjectFactory?.prototype?.existing && !window._factoryHookedInstantKill) {
+        const originalExisting = window.Phaser.GameObjects.GameObjectFactory.prototype.existing;
+
+        window.Phaser.GameObjects.GameObjectFactory.prototype.existing = function(gameObject) {
+            const result = originalExisting.apply(this, arguments);
+
+            if (result && result.hp !== undefined && !window._processedInstantKill.has(result)) {
+                result.hp = 1;
+                window._processedInstantKill.add(result);
+                console.log(`✓ Auto-set new enemy HP to 1`);
+            }
+
+            return result;
+        };
+        console.log("✓ GameObjectFactory.existing hooked");
+        window._factoryHookedInstantKill = true;
+    }
+
+    const monitor = setInterval(() => {
+        if (!window._groups) return;
+
+        window._groups.forEach(group => {
+            if (!group.children?.entries) return;
+
+            group.children.entries.forEach(enemy => {
+
+                if (window._processedInstantKill.has(enemy)) return;
+
+                if (enemy.hp !== undefined && enemy.hp !== null) {
+                    const oldHp = enemy.hp;
+                    enemy.hp = 1;
+                    window._processedInstantKill.add(enemy);
+                    totalModified++;
+
+                    if (totalModified <= 10) {
+                        console.log(`✓ Enemy HP: ${oldHp} → 1`);
+                    }
+                }
+            });
+
+            if (group.classType?.prototype && !group.classType.prototype._instantKillHooked) {
+                const methods = ['start', 'init', 'create'];
+
+                methods.forEach(method => {
+                    if (group.classType.prototype[method]) {
+                        const original = group.classType.prototype[method];
+
+                        group.classType.prototype[method] = function(...args) {
+                            const result = original.apply(this, args);
+
+                            if (this.hp !== undefined) {
+                                this.hp = 1;
                             }
+
+                            return result;
+                        };
+                    }
+                });
+
+                group.classType.prototype._instantKillHooked = true;
+            }
+        });
+
+    }, 5);
+
+    setTimeout(() => {
+        console.log("\n=== STATUS ===");
+        console.log(`Enemies modified: ${totalModified}`);
+
+        if (totalModified > 0) {
+            console.log("\n✅ INSTANT KILL ACTIVE!");
+            alert(`✅ Instant Kill Activated!\n\n${totalModified} enemies now have 1 HP!\n\n🔄 Continuous monitoring: New enemies auto-modified every 5ms`);
+        } else {
+            console.log("\n⚠️ No enemies found yet");
+            console.log("Play a bit and enemies will be modified automatically!");
+        }
+
+        console.log("\n🔄 Continuous monitoring active (every 5ms)");
+        console.log("All enemies will die in one hit!");
+    }, 2000);
+
+    console.log("⏳ Monitoring started...");
+    console.log("Play the game normally!");
+
+    window._instantKillMonitor = monitor;
+})();
+
+
                         },
                     },
                     {
                         name: "Invincibility",
                         description: "Makes you invincible",
                         run: function () {
-                            for (const collider of getStateNode().game.current.config.sceneConfig.physics.world.colliders._active.filter(
-                                (x) => x.callbackContext?.toString().includes("invulnerableTime") || x.callbackContext?.toString().includes("dmgCd")
-                            ))
-                                collider.collideCallback = () => {};
+(() => {
+    console.log("🎮 Blooket Brawl Invincibility - Continuous Mode\n");
+
+    if (!window.Phaser) {
+        alert("Phaser not found!");
+        return;
+    }
+
+    console.log("✓ Phaser", window.Phaser.VERSION);
+
+    let playerFound = false;
+    let collidersDisabled = 0;
+
+    const monitor = setInterval(() => {
+
+        if (window.Phaser.GameObjects?.Sprite) {
+            const originalUpdate = window.Phaser.GameObjects.Sprite.prototype.preUpdate;
+
+            if (!window._invincibilityHooked) {
+                window.Phaser.GameObjects.Sprite.prototype.preUpdate = function(time, delta) {
+                    if (!window._sprites) window._sprites = new Set();
+                    window._sprites.add(this);
+
+                    if (this.texture?.key?.includes('player') || 
+                        this.texture?.key?.includes('blook') ||
+                        this.name?.includes('player')) {
+
+                        if (!window._player) {
+                            console.log("✓✓✓ FOUND PLAYER!");
+                            window._player = this;
+                            playerFound = true;
+                        }
+
+                        if (this.setData) {
+                            this.setData('invulnerable', true);
+                            this.setData('invulnerableTime', Infinity);
+                            this.setData('dmgCd', Infinity);
+                        }
+                    }
+
+                    return originalUpdate?.apply(this, arguments);
+                };
+
+                window._invincibilityHooked = true;
+                console.log("✓ Sprite hook installed");
+            }
+        }
+
+        if (window.Phaser.Physics?.Arcade?.Body && !window._bodyHooked) {
+            const originalUpdate = window.Phaser.Physics.Arcade.Body.prototype.preUpdate;
+
+            window.Phaser.Physics.Arcade.Body.prototype.preUpdate = function() {
+                if (this.gameObject?.texture?.key?.includes('player') ||
+                    this.gameObject?.texture?.key?.includes('blook')) {
+
+                    if (!window._playerBody) {
+                        window._playerBody = this;
+                    }
+
+                    this.onCollide = false;
+                    this.onWorldBounds = false;
+                }
+
+                return originalUpdate?.apply(this, arguments);
+            };
+
+            window._bodyHooked = true;
+            console.log("✓ Body hook installed");
+        }
+
+        if (window.Phaser.Physics?.Arcade?.World && !window._worldHooked) {
+            const proto = window.Phaser.Physics.Arcade.World.prototype;
+
+            if (proto.collideObjects) {
+                const originalCollide = proto.collideObjects;
+
+                proto.collideObjects = function(body1, body2, collideCallback, processCallback, callbackContext) {
+                    if (body1 === window._playerBody || body2 === window._playerBody) {
+                        return false;
+                    }
+                    return originalCollide.apply(this, arguments);
+                };
+            }
+
+            if (proto.separate) {
+                const originalSeparate = proto.separate;
+
+                proto.separate = function(body1, body2, processCallback, callbackContext, overlapOnly) {
+                    if (body1 === window._playerBody || body2 === window._playerBody) {
+                        return false;
+                    }
+                    return originalSeparate.apply(this, arguments);
+                };
+            }
+
+            window._worldHooked = true;
+            console.log("✓ World collision hooks installed");
+        }
+
+    }, 5);
+
+    setTimeout(() => {
+        console.log("\n=== STATUS ===");
+        console.log("Player found:", playerFound ? "✓" : "✗");
+
+        if (playerFound) {
+            console.log("\n✅ INVINCIBILITY ACTIVE!");
+            alert("✅ Invincibility Activated!\n\nYou are now invincible!");
+
+            console.log("\n🔄 Continuous monitoring active (every 5ms)");
+            console.log("New enemies will be handled automatically!");
+        }
+    }, 3000);
+
+    console.log("⏳ Monitoring started...");
+    console.log("Move around in the game!");
+
+    window._invincibilityMonitor = monitor;
+})();
+
+
                         },
                     },
                     {
                         name: "Kill Enemies",
                         description: "Kills all current enemies",
                         run: function () {
-                            getStateNode().game.current.config.sceneConfig.physics.world.bodies.entries.forEach((x) => x?.gameObject?.receiveDamage?.(x.gameObject.hp, 1));
+(() => {
+    console.log("💀 Kill All Enemies - Starting...\n");
+
+    if (!window.Phaser) {
+        alert("❌ Phaser not found! Make sure you're in Monster Brawl.");
+        return;
+    }
+
+    console.log("✓ Phaser", window.Phaser.VERSION);
+
+    if (!window._groups || window._groups.size === 0) {
+        console.log("⏳ Collecting groups first...");
+
+        if (window.Phaser.GameObjects?.Group?.prototype) {
+            const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+                                  window.Phaser.GameObjects.Group.prototype.update;
+
+            if (originalUpdate && !window._groupHookedKill) {
+                window.Phaser.GameObjects.Group.prototype.preUpdate = function(...args) {
+                    if (!window._groups) window._groups = new Set();
+                    window._groups.add(this);
+                    return originalUpdate?.apply(this, args);
+                };
+                window._groupHookedKill = true;
+            }
+        }
+
+        setTimeout(killAllEnemies, 500);
+    } else {
+        killAllEnemies();
+    }
+
+    function killAllEnemies() {
+        console.log("\n=== KILLING ALL ENEMIES (WITH XP DROPS) ===\n");
+
+        if (!window._groups || window._groups.size === 0) {
+            alert("❌ No groups found! Play a bit first, then run this script again.");
+            return;
+        }
+
+        let totalKilled = 0;
+        let killedWithXP = 0;
+        let totalAttempted = 0;
+
+        const groups = Array.from(window._groups);
+        console.log(`Checking ${groups.length} groups...\n`);
+
+        groups.forEach((group, groupIndex) => {
+            if (!group.children?.entries) return;
+
+            const children = group.children.entries;
+            if (children.length === 0) return;
+
+            children.forEach((enemy, enemyIndex) => {
+
+                const texture = enemy.texture?.key || "";
+                if (texture.includes('player')) return;
+
+                totalAttempted++;
+
+                if (typeof enemy.receiveDamage === 'function' && enemy.hp !== undefined) {
+                    try {
+                        const hp = enemy.hp || 9999;
+                        enemy.receiveDamage(hp, 1);
+                        totalKilled++;
+                        killedWithXP++;
+
+                        if (killedWithXP <= 5) {
+                            console.log(`✓ Killed enemy (HP: ${hp}) - XP will drop`);
+                        }
+                        return;
+                    } catch (e) {
+                        console.log(`  ⚠️ receiveDamage failed:`, e.message);
+                    }
+                }
+
+                if (enemy.hp !== undefined) {
+                    try {
+                        const oldHp = enemy.hp;
+                        enemy.hp = 0;
+
+                        if (typeof enemy.die === 'function') {
+                            enemy.die();
+                            totalKilled++;
+                            killedWithXP++;
+
+                            if (killedWithXP <= 5) {
+                                console.log(`✓ Killed via die() method`);
+                            }
+                            return;
+                        } else if (typeof enemy.death === 'function') {
+                            enemy.death();
+                            totalKilled++;
+                            killedWithXP++;
+
+                            if (killedWithXP <= 5) {
+                                console.log(`✓ Killed via death() method`);
+                            }
+                            return;
+                        }
+                    } catch (e) {}
+                }
+
+                if (enemy.body) {
+                    try {
+
+                        if (typeof enemy.receiveDamage === 'function') {
+                            enemy.receiveDamage(99999, 1);
+                            totalKilled++;
+                            killedWithXP++;
+                            return;
+                        }
+                    } catch (e) {}
+                }
+
+                try {
+                    enemy.hp = 0;
+                    enemy.setVisible(false);
+                    enemy.setActive(false);
+
+                    if (enemy.emit) {
+                        enemy.emit('death');
+                        enemy.emit('killed');
+                    }
+
+                    totalKilled++;
+
+                    if (totalKilled <= 5) {
+                        console.log(`✓ Disabled enemy (may not drop XP)`);
+                    }
+                } catch (e) {}
+            });
+        });
+
+        console.log("\n\n=== SUMMARY ===");
+        console.log(`Enemies found: ${totalAttempted}`);
+        console.log(`Enemies killed: ${totalKilled}`);
+        console.log(`Killed with XP drops: ${killedWithXP}`);
+
+        if (killedWithXP > 0) {
+            console.log("\n✅ SUCCESS!");
+            alert(`✅ Killed All Enemies!\n\n${killedWithXP} enemies eliminated!\n💎 XP should drop normally!`);
+        } else if (totalKilled > 0) {
+            console.log("\n⚠️ Killed enemies but XP drops not guaranteed");
+            alert(`⚠️ Killed ${totalKilled} enemies!\n\nHowever, XP drops may not work properly.\nTry using Instant Kill for guaranteed one-hit kills with XP!`);
+        } else {
+            console.log("\n⚠️ No enemies found");
+            alert("⚠️ No enemies found on screen!\nMake sure you're actively playing.");
+        }
+    }
+
+})();
+
+
                         },
                     },
                     {
                         name: "Magnet",
                         description: "Pulls all xp towards you",
                         run: function () {
-                            getStateNode()
-                                .game.current.config.sceneConfig.physics.world.colliders._active.find((x) => x.collideCallback?.toString().includes("magnetTime"))
-                                .collideCallback({ active: true }, { active: true, setActive() {}, setVisible() {} });
+(() => {
+    console.log("🧲 Permanent Magnet\n");
+
+    if (!window.Phaser) {
+        alert("❌ Phaser not found!");
+        return;
+    }
+
+    console.log("✓ Phaser", window.Phaser.VERSION);
+
+    if (window.Phaser.GameObjects?.Group?.prototype && !window._groupHooked) {
+        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+                              window.Phaser.GameObjects.Group.prototype.update;
+
+        if (originalUpdate) {
+            window.Phaser.GameObjects.Group.prototype.preUpdate = function(...args) {
+                if (!window._groups) window._groups = new Set();
+                window._groups.add(this);
+                return originalUpdate?.apply(this, args);
+            };
+            console.log("✓ Group hook installed");
+            window._groupHooked = true;
+        }
+    }
+
+    console.log("\n⏳ Waiting for scene...");
+
+    setTimeout(() => {
+        if (!window._groups || window._groups.size === 0) {
+            alert("❌ Scene not found! Make sure you're playing!");
+            return;
+        }
+
+        const scene = Array.from(window._groups)[0].scene;
+
+        if (!scene || !scene.playerService || !scene.playerService.player) {
+            alert("❌ Player not found!");
+            return;
+        }
+
+        const player = scene.playerService.player;
+
+        console.log("\n🧲 Current magnetTime:", player.magnetTime);
+
+        player.magnetTime = 999999;
+
+        console.log("✅ New magnetTime:", player.magnetTime);
+        console.log("\n🧲 Permanent magnet activated!");
+        console.log("All drops will now be attracted to you!");
+
+        alert("✅ Permanent Magnet!\n\n🧲 You now have a magnet effect for 999999 seconds!\n\nAll XP and items will be pulled to you automatically!");
+
+    }, 1000);
+
+})();
+
                         },
                     },
                     {
-                        name: "Max Current Abilities",
-                        description: "Maxes out all your current abilities",
+                        name: "Make Abilities OP",
+                        description: "Maxes out all your current abilities and makes them insanely powerful",
                         run: function () {
-                            const stateNode = getStateNode();
-                            for (const [ability, level] of Object.entries(stateNode.state.abilities))
-                                for (let i = 0; i < 10 - level; i++) stateNode.game.current.config.sceneConfig.game.events.emit("level up", ability, stateNode.state.abilities[ability]++);
-                            stateNode.setState({
-                                level: (stateNode.game.current.config.sceneConfig.level = [1, 3, 5, 10, 15, 25, 35].sort((a, b) => Math.abs(a - stateNode.state.level) - Math.abs(b - stateNode.state.level))[0] - 1),
-                            });
+(() => {
+
+    const SIZE_MULTIPLIER = 5; 
+
+    const CHECK_INTERVAL = 3000; 
+
+    if (window._autoOpAbilitiesRunning) {
+        alert("❌ Script is already running!");
+        return;
+    }
+    window._autoOpAbilitiesRunning = true;
+
+    console.log(`💥 Auto OP Abilities (${SIZE_MULTIPLIER}x Size)\n`);
+    console.log("⏰ Checking every 3 seconds for new abilities...\n");
+
+    if (!window.Phaser) {
+        alert("❌ Phaser not found!");
+        return;
+    }
+
+    console.log("✓ Phaser", window.Phaser.VERSION);
+
+    window._processedAbilities = window._processedAbilities || new Set();
+    window._originalWidths = window._originalWidths || {};
+
+    if (window.Phaser.GameObjects?.Group?.prototype && !window._groupHooked) {
+        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+                              window.Phaser.GameObjects.Group.prototype.update;
+
+        if (originalUpdate) {
+            window.Phaser.GameObjects.Group.prototype.preUpdate = function(...args) {
+                if (!window._groups) window._groups = new Set();
+                window._groups.add(this);
+                return originalUpdate?.apply(this, args);
+            };
+            console.log("✓ Group hook installed");
+            window._groupHooked = true;
+        }
+    }
+
+    let totalUnlocked = 0;
+    let totalModified = 0;
+
+    const processAbilities = () => {
+        if (!window._groups || window._groups.size === 0) return;
+
+        const scene = Array.from(window._groups)[0].scene;
+
+        if (!scene || !scene.abilityService) return;
+
+        Object.keys(scene.abilityService.abilityStats).forEach(ability => {
+
+            if (window._processedAbilities.has(ability)) return;
+
+            const stats = scene.abilityService.abilityStats[ability];
+
+            console.log(`\n🆕 New ability detected: ${ability}`);
+
+            if (stats.width !== undefined) {
+                window._originalWidths[ability] = stats.width;
+            }
+
+            if (scene.abilityService.abilityLevels[ability] === undefined) {
+                scene.abilityService.abilityLevels[ability] = 1;
+                console.log(`  🔓 Unlocked!`);
+                totalUnlocked++;
+            }
+
+            if (stats.dmg !== undefined) {
+                stats.dmg = 9999;
+            }
+
+            if (stats.fireRate !== undefined) {
+                stats.fireRate = 50;
+            }
+
+            if (stats.maxTargets !== undefined) {
+                stats.maxTargets = 999;
+            }
+
+            if (stats.numProjectiles !== undefined) {
+                stats.numProjectiles = 50;
+            }
+
+            if (stats.speed !== undefined) {
+                stats.speed = 2000;
+            }
+
+            if (stats.lifespan !== undefined && stats.lifespan > 0) {
+                stats.lifespan = 10000;
+            }
+
+            if (stats.knockback !== undefined) {
+                stats.knockback = 5;
+            }
+
+            if (stats.width !== undefined && window._originalWidths[ability]) {
+                const originalWidth = window._originalWidths[ability];
+                stats.width = Math.round(originalWidth * SIZE_MULTIPLIER);
+                console.log(`  📏 Size: ${originalWidth} → ${stats.width} (${SIZE_MULTIPLIER}x)`);
+            }
+
+            if (stats.intervalRate !== undefined) {
+                stats.intervalRate = 10;
+            }
+
+            console.log(`  ✅ ${ability} is now OP!`);
+
+            window._processedAbilities.add(ability);
+            totalModified++;
+        });
+    };
+
+    setTimeout(() => {
+        console.log("\n🔍 Initial scan...");
+        processAbilities();
+
+        if (totalModified > 0) {
+            console.log(`\n✅ Initial scan complete!`);
+            console.log(`🔓 Unlocked: ${totalUnlocked}`);
+            console.log(`💥 Modified: ${totalModified}`);
+        }
+    }, 1000);
+
+    const monitor = setInterval(() => {
+        processAbilities();
+    }, CHECK_INTERVAL);
+
+    window._autoOpMonitor = monitor;
+
+    console.log("\n✅ Auto OP script started!");
+    console.log(`⏰ Monitoring every ${CHECK_INTERVAL/1000} seconds`);
+    console.log(`📏 Size multiplier: ${SIZE_MULTIPLIER}x`);
+    console.log("\n💡 New abilities will be automatically made OP!");
+    console.log("💡 To stop: clearInterval(window._autoOpMonitor)");
+
+})();
+
+
                         },
                     },
                     {
-                        name: "Next Level",
-                        description: "Skips to the next level",
-                        run: function () {
-                            let stateNode = getStateNode();
-                            let { object1: player, object2: xp } = stateNode.game.current.config.sceneConfig.physics.world.colliders._active.find((x) => x.collideCallback?.toString().includes('emit("xp'));
-                            xp.get().spawn(player.x, player.y, ((e) => (1 === e ? 1 : e < 5 ? 5 : e < 10 ? 10 : e < 20 ? 20 : e < 30 ? 30 : e < 40 ? 40 : e < 50 ? 50 : 100))(stateNode.state.level) - stateNode.xp);
-                        },
-                    },
-                    {
-                        name: "Remove Obstacles",
-                        description: "Removes all rocks and obstacles",
-                        run: function () {
-                            getStateNode().game.current.config.sceneConfig.physics.world.bodies.entries.forEach((body) => {
-                                try {
-                                    if (body.gameObject.frame.texture.key.includes("obstacle")) body.gameObject.destroy();
-                                } catch {}
-                            });
-                        },
+                        name: "Set XP",
+                        description: "Sets your XP",
+                        inputs: [
+                            {
+                                name: "Amount",
+                                type: "number"
+                            }
+                        ],
+                        run: function (xp) {
+                            (() => {
+    console.log("💎 Set XP\n");
+
+    if (window.Phaser?.GameObjects?.Group?.prototype && !window._xpSceneHook) {
+        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+                              window.Phaser.GameObjects.Group.prototype.update;
+
+        if (originalUpdate) {
+            window.Phaser.GameObjects.Group.prototype.preUpdate = function(...args) {
+                if (!window._scene && this.scene) {
+                    window._scene = this.scene;
+                    console.log("✓ Scene captured!");
+                }
+                return originalUpdate?.apply(this, args);
+            };
+            window._xpSceneHook = true;
+        }
+    }
+
+    console.log("✓ Phaser hook installed");
+    console.log("⏳ Waiting for scene...");
+    console.log("\nMove around in the game to activate!");
+
+    let checkCount = 0;
+
+    const checkInterval = setInterval(() => {
+        checkCount++;
+
+        if (checkCount % 10 === 0) {
+            console.log(`  Still waiting... (${checkCount / 2}s) - Move around!`);
+        }
+
+        if (window._scene?.gameManager) {
+            clearInterval(checkInterval);
+
+            const gm = window._scene.gameManager;
+
+            console.log("\n✓✓✓ Scene found!");
+            console.log("Current XP:", gm.totalXp);
+            console.log("Current Level:", gm.level);
+            console.log("Status:", gm.status);
+
+            const newXp = xp;
+
+            if (newXp !== null) {
+                const xp = parseInt(newXp);
+
+                if (isNaN(xp)) {
+                    alert("❌ Invalid number!");
+                    return;
+                }
+
+                gm.totalXp = xp;
+                gm.curXp = xp;
+
+                window._scene.eventBus.emit('xp-updated', xp);
+
+                console.log("✅ XP set to:", xp);
+                alert(`✅ XP Set!\n\nNew XP: ${xp}\nLevel: ${gm.level}`);
+            } else {
+                console.log("Cancelled");
+            }
+        }
+
+    }, 200); 
+
+    setTimeout(() => {
+        if (window._scene?.gameManager) return;
+
+        clearInterval(checkInterval);
+        console.log("\n❌ Timeout - scene not found after 60 seconds");
+        alert("❌ Timeout!\n\nMove around in the game and try again.");
+    }, 60000);
+})();
+
+},
                     },
                     {
                         name: "Reset Health",
                         description: "Resets health and gives invincibility for 3 seconds",
                         run: function () {
-                            getStateNode().game.current.events._events.respawn.fn();
+(() => {
+    console.log("❤️ Reset Health\n");
+
+    if (window.Phaser?.GameObjects?.Group?.prototype && !window._healthHook) {
+        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+                              window.Phaser.GameObjects.Group.prototype.update;
+
+        if (originalUpdate) {
+            window.Phaser.GameObjects.Group.prototype.preUpdate = function(...args) {
+                if (!window._scene && this.scene) {
+                    window._scene = this.scene;
+                }
+                return originalUpdate?.apply(this, args);
+            };
+            window._healthHook = true;
+        }
+    }
+
+    setTimeout(() => {
+        if (!window._scene?.eventBus) {
+            alert("❌ Scene not found! Move around and try again.");
+            return;
+        }
+
+        try {
+
+            const respawnEvent = window._scene.eventBus._events?.respawn;
+
+            if (respawnEvent?.fn) {
+                console.log("✓ Found respawn event");
+                respawnEvent.fn();
+                console.log("✅ Health reset!");
+                alert("✅ Health Reset!\n\nYour health is now full!");
+            } else if (respawnEvent && typeof respawnEvent === 'function') {
+                respawnEvent();
+                console.log("✅ Health reset!");
+                alert("✅ Health Reset!\n\nYour health is now full!");
+            } else {
+
+                window._scene.eventBus.emit('respawn');
+                console.log("✅ Respawn event emitted!");
+                alert("✅ Health Reset!\n\nRespawn triggered!");
+            }
+        } catch (e) {
+            console.log("❌ Error:", e);
+            alert(`❌ Error: ${e.message}`);
+        }
+
+    }, 1000);
+
+    console.log("⏳ Getting scene...");
+})();
+
+
                         },
                     },
                 ],
@@ -4814,70 +6535,205 @@ name: "Set Next Fish",
                 name: "Tower Defense",
                 cheats: [
                     {
-                        name: "Earthquake",
-                        description: "Shuffles around towers",
-                        run: function () {
-                            let stateNode = getStateNode();
-                            stateNode.setState(
-                                {
-                                    eventName: "Earthquake",
-                                    event: {
-                                        short: "e",
-                                        color: "#805500",
-                                        icon: "fas fa-mountain",
-                                        desc: "All of your towers get mixed up",
-                                        rate: 0.02,
-                                    },
-                                    buyTowerName: "",
-                                    buyTower: {},
-                                },
-                                () => (stateNode.eventTimeout = setTimeout(() => stateNode.setState({ event: {}, eventName: "" }), 6e3))
-                            );
-                            stateNode.tiles.forEach((row) => row.forEach((col, i) => col == 3 && (row[i] = 0)));
-                            let tiles = [];
-                            for (let y = 0; y < stateNode.tiles.length; y++) for (let x = 0; x < stateNode.tiles[y].length; x++) if (stateNode.tiles[y][x] == 0) tiles.push({ x, y });
-                            tiles.sort(() => Math.random() - Math.random());
-                            stateNode.towers.forEach((tower) => {
-                                let { x, y } = tiles.pop();
-                                tower.move(x, y, stateNode.tileSize);
-                                stateNode.tiles[y][x] = 3;
-                            });
-                        },
-                    },
-                    {
                         name: "Max Tower Stats",
                         description: "Makes all placed towers overpowered",
                         run: function () {
-                            getStateNode().towers.forEach((tower) => {
-                                tower.range = 100;
-                                tower.fullCd = tower.cd = 0;
-                                tower.damage = 1e6;
-                            });
-                        },
-                    },
-                    {
-                        name: "Remove Ducks",
-                        description: "Removes ducks",
-                        run: function () {
-                            let { ducks, tiles } = getStateNode();
-                            ducks.forEach((x) => (tiles[x.y][x.x] = 0));
-                            ducks.length = 0;
+(() => {
+    let iframe = document.createElement('iframe');
+    document.body.append(iframe);
+    window.alert = iframe.contentWindow.alert.bind(window);
+    iframe.remove();
+
+    function searchDOM(element = document.body, depth = 0) {
+        if (depth > 5) return null;
+        const keys = Object.keys(element);
+        const reactKey = keys.find(k => k.includes('react'));
+        if (reactKey) {
+            try {
+                let fiber = element[reactKey];
+                while (fiber) {
+                    const node = fiber.stateNode || (fiber._owner ? fiber._owner.stateNode : null);
+
+                    if (node) {
+
+                        if (node.towers && Array.isArray(node.towers)) return node;
+
+                        if (node.state && node.state.round !== undefined) return node;
+                    }
+                    fiber = fiber.return;
+                }
+            } catch (e) {}
+        }
+        for (const child of element.children) {
+            const result = searchDOM(child, depth + 1);
+            if (result) return result;
+        }
+        return null;
+    }
+
+    const comp = searchDOM();
+
+    if (!comp) { 
+        alert("❌ Component not found!"); 
+        return; 
+    }
+
+    if (!comp.towers || comp.towers.length === 0) {
+        alert("⚠️ No towers found! Place a tower first.");
+        return;
+    }
+
+    console.log("Found Towers:", comp.towers);
+
+    comp.towers.forEach(tower => {
+        tower.range = 100;
+        tower.cd = 0;
+        tower.damage = 1000000;
+
+        if (tower.stats) {
+            tower.stats.damage = 1000000;
+            tower.stats.range = 100;
+            tower.stats.fireRate = 0.01;
+        }
+    });
+
+    alert(`✅ Upgraded ${comp.towers.length} towers!`);
+
+    if (comp.forceUpdate) comp.forceUpdate();
+
+})();
+
+
                         },
                     },
                     {
                         name: "Remove Enemies",
                         description: "Removes all the enemies",
                         run: function () {
-                            let stateNode = getStateNode();
-                            stateNode.enemies = stateNode.futureEnemies = [];
+(() => {
+
+    let iframe = document.createElement('iframe');
+    document.body.append(iframe);
+    window.alert = iframe.contentWindow.alert.bind(window);
+    iframe.remove();
+
+    function searchDOM(element = document.body, depth = 0) {
+        if (depth > 5) return null;
+        const keys = Object.keys(element);
+        const reactKey = keys.find(k => k.includes('react'));
+        if (reactKey) {
+            try {
+                let fiber = element[reactKey];
+                while (fiber) {
+                    const node = fiber.stateNode || (fiber._owner ? fiber._owner.stateNode : null);
+
+                    if (node) {
+
+                        if (node.enemies && Array.isArray(node.enemies)) return node;
+
+                        if (node.state && node.state.enemies) return node;
+                    }
+                    fiber = fiber.return;
+                }
+            } catch (e) {}
+        }
+        for (const child of element.children) {
+            const result = searchDOM(child, depth + 1);
+            if (result) return result;
+        }
+        return null;
+    }
+
+    const comp = searchDOM();
+
+    if (!comp) { 
+        alert("❌ Component not found! Make sure you are in-game."); 
+        return; 
+    }
+
+    if (comp.enemies) {
+        const count = comp.enemies.length;
+        comp.enemies = []; 
+
+        comp.futureEnemies = []; 
+
+        if (comp.state && comp.state.enemies) {
+            comp.setState({ enemies: [], futureEnemies: [] });
+        }
+
+        alert(`✅ Removed ${count} enemies and cleared the wave!`);
+    } else {
+        alert("⚠️ No enemies found to remove.");
+    }
+
+})();
+
+
                         },
                     },
                     {
                         name: "Remove Obstacles",
                         description: "Lets you place towers anywhere",
                         run: function () {
-                            let stateNode = getStateNode();
-                            stateNode.tiles = stateNode.tiles.map((row) => row.fill(0));
+(() => {
+
+    let iframe = document.createElement('iframe');
+    document.body.append(iframe);
+    window.alert = iframe.contentWindow.alert.bind(window);
+    iframe.remove();
+
+    function searchDOM(element = document.body, depth = 0) {
+        if (depth > 5) return null;
+        const keys = Object.keys(element);
+        const reactKey = keys.find(k => k.includes('react'));
+        if (reactKey) {
+            try {
+                let fiber = element[reactKey];
+                while (fiber) {
+                    const node = fiber.stateNode || (fiber._owner ? fiber._owner.stateNode : null);
+
+                    if (node) {
+
+                        if (node.tiles && Array.isArray(node.tiles)) return node;
+                    }
+                    fiber = fiber.return;
+                }
+            } catch (e) {}
+        }
+        for (const child of element.children) {
+            const result = searchDOM(child, depth + 1);
+            if (result) return result;
+        }
+        return null;
+    }
+
+    const comp = searchDOM();
+
+    if (!comp) { 
+        alert("❌ Component not found! Make sure you are in-game."); 
+        return; 
+    }
+
+    if (comp.tiles && comp.tiles.length > 0) {
+
+        comp.tiles = comp.tiles.map(row => {
+            if (Array.isArray(row)) {
+
+                return new Array(row.length).fill(0);
+            }
+            return row;
+        });
+
+        if (comp.forceUpdate) comp.forceUpdate();
+
+        alert("✅ All obstacles removed! You can now place towers anywhere.");
+    } else {
+        alert("⚠️ No map tiles found.");
+    }
+
+})();
+
+
                         },
                     },
                     {
@@ -4890,7 +6746,31 @@ name: "Set Next Fish",
                             },
                         ],
                         run: function (dmg) {
-                            getStateNode().dmg = dmg;
+(() => {
+    function getComp(element = document.body, depth = 0) {
+        if (depth > 20) return null;
+        const fiber = element[Object.keys(element).find(k => k.includes('react'))];
+        if (fiber) {
+            let curr = fiber;
+            while (curr) {
+                const sn = curr.stateNode || curr._owner?.stateNode;
+                if (sn?.state?.totalDamage !== undefined) return sn;
+                curr = curr.return;
+            }
+        }
+        for (const child of element.children) {
+            const result = getComp(child, depth + 1);
+            if (result) return result;
+        }
+    }
+    const sn = getComp();
+    if (!sn) return;
+    let iframe = document.createElement('iframe');
+    document.body.append(iframe);
+    const input = iframe.contentWindow.prompt("Enter new Total Damage:", sn.state.totalDamage);
+    iframe.remove();
+    if (input) sn.setState({ totalDamage: parseInt(input) });
+})();
                         },
                     },
                     {
@@ -4903,7 +6783,47 @@ name: "Set Next Fish",
                             },
                         ],
                         run: function (round) {
-                            getStateNode().setState({ round });
+(() => {
+    let iframe = document.createElement('iframe');
+    document.body.append(iframe);
+    window.prompt = iframe.contentWindow.prompt.bind(window);
+    iframe.remove();
+
+    function searchDOM(element = document.body, depth = 0) {
+        if (depth > 5) return null;
+        const keys = Object.keys(element);
+        const reactKey = keys.find(k => k.includes('react'));
+        if (reactKey) {
+            try {
+                let fiber = element[reactKey];
+                while (fiber) {
+                    if (fiber._owner && fiber._owner.stateNode && fiber._owner.stateNode.state) {
+                        const state = fiber._owner.stateNode.state;
+                        if (state.round !== undefined) return fiber._owner.stateNode;
+                    }
+                    if (fiber.stateNode && fiber.stateNode.state) {
+                        const state = fiber.stateNode.state;
+                        if (state.round !== undefined) return fiber.stateNode;
+                    }
+                    fiber = fiber.return;
+                }
+            } catch (e) {}
+        }
+        for (const child of element.children) {
+            const result = searchDOM(child, depth + 1);
+            if (result) return result;
+        }
+        return null;
+    }
+
+    const comp = searchDOM();
+    if (!comp) { alert("❌ Component not found!"); return; }
+
+    comp.setState({ round });
+    alert(`✅ Round set to ${round}!`);
+})();
+
+
                         },
                     },
                     {
@@ -4916,7 +6836,33 @@ name: "Set Next Fish",
                             },
                         ],
                         run: function (tokens) {
-                            getStateNode().setState({ tokens });
+(() => {
+    function getComp(element = document.body, depth = 0) {
+        if (depth > 20) return null;
+        const fiber = element[Object.keys(element).find(k => k.includes('react'))];
+        if (fiber) {
+            let curr = fiber;
+            while (curr) {
+                const sn = curr.stateNode || curr._owner?.stateNode;
+                if (sn?.state?.tokens !== undefined) return sn;
+                curr = curr.return;
+            }
+        }
+        for (const child of element.children) {
+            const result = getComp(child, depth + 1);
+            if (result) return result;
+        }
+    }
+    const sn = getComp();
+    if (!sn) return;
+    let iframe = document.createElement('iframe');
+    document.body.append(iframe);
+    const input = iframe.contentWindow.prompt("Enter new Token amount:", sn.state.tokens);
+    iframe.remove();
+    if (input) sn.setState({ tokens: parseInt(input) });
+})();
+
+
                         },
                     },
                 ],
@@ -5082,6 +7028,340 @@ name: "Set Next Fish",
                         },
                     },
                 ],
+            },             
+            solocafe: {
+                img: "https://media.blooket.com/image/upload/v1663212881/Media/logos/Cafe_Logo_Resized.png",
+                name: "Café (Solo)",
+                cheats: [
+                    {
+                        name: "Max Items",
+                        description: "Maxes out items in the shop",
+                        run: function () {
+(() => {
+
+    let iframe = document.querySelector("iframe");
+    if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        document.body.append(iframe);
+    }
+    const alert = iframe.contentWindow.alert.bind(window);
+
+    const cheat = () => {
+        const root = document.querySelector('#app') || document.body;
+        const rKey = Object.keys(root).find(k => k.startsWith('__reactFiber'));
+
+        if (!rKey) return alert("❌ React Root not found. Please reload.");
+
+        let success = false;
+
+        function traverse(node) {
+            if (success || !node) return;
+
+            if (node.memoizedState) {
+                let hook = node.memoizedState;
+                let index = 0;
+                let levelHook = null;
+
+                while (hook) {
+                    if (index === 4) {
+                        levelHook = hook;
+                        break; 
+                    }
+                    hook = hook.next;
+                    index++;
+                }
+
+                if (levelHook) {
+                    const val = levelHook.memoizedState;
+                    if (val && typeof val === 'object' && !Array.isArray(val) && val.Toast !== undefined) {
+
+                        const newLevels = { ...val };
+                        Object.keys(newLevels).forEach(key => {
+                            if (typeof newLevels[key] === 'number') {
+                                newLevels[key] = 5; 
+
+                            }
+                        });
+
+                        if (levelHook.queue && levelHook.queue.dispatch) {
+                            levelHook.queue.dispatch(newLevels);
+                            success = true;
+                            alert("✅ All items upgraded to Level 5!");
+                        }
+                    }
+                }
+            }
+            traverse(node.child);
+            traverse(node.sibling);
+        }
+
+        traverse(root[rKey]);
+
+        if (!success) alert("❌ Cheat failed. Make sure you are in the game.");
+    };
+
+    cheat();
+
+})();
+
+
+                        },
+                    },
+                    {
+                        name: "Set Cash",
+                        description: "Sets cafe cash",
+                        inputs: [
+                            {
+                                name: "Amount",
+                                type: "number",
+                            },
+                        ],
+                        run: function (cafeCash) {
+(() => {
+
+    const iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    const prompt = iframe.contentWindow.prompt; 
+
+    const amountStr = prompt("💸 ENTER DESIRED CASH AMOUNT:", "1000000");
+    document.body.removeChild(iframe);
+
+    if (!amountStr) return; 
+
+    const newAmount = cafeCash;
+
+    if (isNaN(newAmount)) {
+        alert("❌ Invalid number entered.");
+        return;
+    }
+
+    console.clear();
+    console.log(`%c☕ APPLYING CASH HACK: $${newAmount.toLocaleString()}`, "color: #ff9900; font-weight: bold; font-size: 1.2em;");
+
+    function findCashDispatcher() {
+        const root = document.querySelector('#app') || document.body;
+        const rKey = Object.keys(root).find(k => k.startsWith('__reactFiber'));
+        if (!rKey) return null;
+
+        let result = null;
+
+        function traverse(node) {
+            if (result || !node) return;
+
+            if (node.memoizedState) {
+                let hook = node.memoizedState;
+                let depth = 0;
+
+                while (hook) {
+                    const val = hook.memoizedState;
+
+                    if (typeof val === 'number' && hook.queue && hook.queue.dispatch) {
+
+                         if (depth > 5) { 
+
+                             if (!result) result = [];
+                             result.push(hook.queue.dispatch);
+                         }
+                    }
+                    hook = hook.next;
+                    depth++;
+                }
+            }
+            traverse(node.child);
+            traverse(node.sibling);
+        }
+
+        traverse(root[rKey]);
+        return result;
+    }
+
+    function setCashByStructure() {
+        const root = document.querySelector('#app') || document.body;
+        const rKey = Object.keys(root).find(k => k.startsWith('__reactFiber'));
+
+        let found = false;
+
+        function traverse(node) {
+            if (found || !node) return;
+
+            if (node.memoizedState) {
+
+                let h = node.memoizedState;
+                try {
+
+                    for(let i=0; i<8; i++) { if(h) h = h.next; }
+
+                    if (h && h.memoizedState !== undefined && typeof h.memoizedState === 'number') {
+
+                        let count = 0;
+                        let temp = node.memoizedState;
+                        while(temp) { count++; temp = temp.next; }
+
+                        if (count > 10 && h.queue && h.queue.dispatch) {
+                             console.log(`%c⚡ Found candidate Hook (Value: ${h.memoizedState})`, "color: #00ff00");
+                             h.queue.dispatch(newAmount);
+                             found = true;
+                        }
+                    }
+                } catch(e) {}
+            }
+            traverse(node.child);
+            traverse(node.sibling);
+        }
+
+        if (rKey) traverse(root[rKey]);
+        return found;
+    }
+
+    const success = setCashByStructure();
+
+    if (success) {
+        console.log("%c✅ SUCCESS: Money Updated!", "background: green; color: white; padding: 5px; font-size: 1.2em");
+        alert(`💰 Cash set to ${newAmount.toLocaleString()}!\n\n(If it doesn't show immediately, buy something cheap to refresh)`);
+    } else {
+        console.log("❌ Could not pinpoint the exact hook automatically.");
+        console.log("⚠️ Fallback: Trying to set ALL deep numeric states...");
+
+        const dispatchers = findCashDispatcher();
+        if (dispatchers && dispatchers.length > 0) {
+            dispatchers.forEach(d => d(newAmount));
+            alert("⚠️ Brute-force update sent. Check your cash.");
+        } else {
+            alert("❌ Failed to find game state. Are you in the Café game?");
+        }
+    }
+})();
+
+
+                        },
+                    },
+                    {
+                        name: "Stock Food",
+                        description: "Stocks all food to 99 (Not usable in the shop)",
+                        run: function () {
+(() => {
+    const root = document.querySelector('#app') || document.body;
+    const rKey = Object.keys(root).find(k => k.startsWith('__reactFiber'));
+    if (!rKey) return;
+
+    let success = false;
+
+    function traverse(node) {
+        if (success || !node) return;
+
+        if (node.memoizedState) {
+            let hook = node.memoizedState;
+            let index = 0;
+            let hook4 = null; 
+
+            let hook5 = null; 
+
+            while (hook) {
+                if (index === 4) hook4 = hook;
+                if (index === 5) hook5 = hook;
+                if (index > 5) break;
+                hook = hook.next;
+                index++;
+            }
+
+            if (hook4 && hook5) {
+                const val4 = hook4.memoizedState;
+                const val5 = hook5.memoizedState;
+
+                if (val4 && val5 && typeof val4 === 'object' && typeof val5 === 'object' && val4.Toast !== undefined) {
+
+                    const newLevels = { ...val4 };
+                    Object.keys(newLevels).forEach(key => {
+                        if (typeof newLevels[key] === 'number') newLevels[key] = 5;
+                    });
+
+                    const newStock = { ...val5 };
+                    Object.keys(newStock).forEach(key => {
+                        if (typeof newStock[key] === 'number') newStock[key] = 999;
+                    });
+
+                    hook4.queue.dispatch(newLevels);
+                    hook5.queue.dispatch(newStock);
+
+                    success = true;
+                }
+            }
+        }
+        traverse(node.child);
+        traverse(node.sibling);
+    }
+
+    traverse(root[rKey]);
+})();
+
+
+                        },
+                    },{
+                        name: "Make Customers OP",
+                        description: "Makes all customers pay a LOT",
+                        run: function(){
+                            (() => {
+
+    if (window.opCustomerInterval) {
+        clearInterval(window.opCustomerInterval);
+        console.log("%c[makeCustomersOP] Restarting loop...", "color: orange");
+    }
+
+    const OP_VALUE = 99999999999999; 
+
+    function scanAndModify() {
+        const root = document.querySelector('#app') || document.body;
+        const rKey = Object.keys(root).find(k => k.startsWith('__reactFiber'));
+        if (!rKey) return;
+
+        let totalModified = 0;
+
+        function traverse(node) {
+            if (!node) return;
+
+            if (node.memoizedState && typeof node.type === 'function') {
+                let hook = node.memoizedState;
+                while (hook) {
+                    const data = hook.memoizedState;
+
+                    if (data instanceof Map && data.size > 0) {
+                        data.forEach((val) => {
+
+                            if (val && typeof val === 'object' && val.order && typeof val.order.value === 'number') {
+
+                                if (val.order.value !== OP_VALUE) {
+                                    val.order.value = OP_VALUE;
+                                    totalModified++;
+                                }
+                            }
+                        });
+                    }
+                    hook = hook.next;
+                }
+            }
+
+            traverse(node.child);
+            traverse(node.sibling);
+        }
+
+        traverse(root[rKey]);
+
+        if (totalModified > 0) {
+            console.log(`%c[makeCustomersOP] Upgraded ${totalModified} new customers!`, 'color: #00ff00; font-weight: bold');
+        }
+    }
+
+    console.clear();
+    console.log("%c[makeCustomersOP] Activated! New customers will be rich.", "color: #00ff00; font-size: 16px; font-weight: bold");
+
+    window.opCustomerInterval = setInterval(scanAndModify, 500);
+})();
+
+
+                        }
+                    }
+                ],
             },
             factory: {
                 img: "https://media.blooket.com/image/upload/v1663212881/Media/logos/Factory_Logo_Resized.png",
@@ -5177,10 +7457,159 @@ name: "Set Next Fish",
                             },
                         ],
                         run: function (blook) {
-                            const stateNode = getStateNode();
-                            if (stateNode.state.blooks.length >= 10) alert("Choose a blook to replace");
-                            stateNode.waiting = false;
-                            stateNode.chooseBlook(JSON.parse(blook));
+(() => {
+    console.clear();
+    console.log("🏭 Factory: Choose Blook...");
+
+    const factoryBlooks = [
+        { name: "Chick", color: "#ffcd05", class: "🌽", rarity: "Common", cash: [3, 7, 65, 400, 2500], time: [1, 1, 1, 1, 1], price: [300, 3000, 30000, 200000] },
+        { name: "Chicken", color: "#ed1c24", class: "🌽", rarity: "Common", cash: [10, 40, 200, 1400, 10000], time: [5, 4, 3, 2, 1], price: [570, 4000, 50000, 800000] },
+        { name: "Cow", color: "#58595b", class: "🌽", rarity: "Common", cash: [25, 75, 1500, 25000, 250000], time: [15, 10, 10, 10, 5], price: [500, 9500, 160000, 4000000] },
+        { name: "Duck", color: "#4ab96d", class: "🌽", rarity: "Common", cash: [4, 24, 200, 3000, 40000], time: [3, 3, 3, 3, 3], price: [450, 4200, 70000, 1100000] },
+        { name: "Goat", color: "#c59a74", class: "🌽", rarity: "Common", cash: [5, 28, 200, 1300, 12000], time: [3, 3, 2, 2, 2], price: [500, 6400, 45000, 500000] },
+        { name: "Horse", color: "#995b3c", class: "🌽", rarity: "Common", cash: [5, 20, 270, 1800, 15000], time: [2, 2, 2, 2, 2], price: [550, 8200, 65000, 600000] },
+        { name: "Pig", color: "#f6a9cb", class: "🌽", rarity: "Common", cash: [20, 50, 1300, 8000, 80000], time: [7, 7, 7, 7, 5], price: [400, 11000, 80000, 1300000] },
+        { name: "Sheep", color: "#414042", class: "🌽", rarity: "Common", cash: [6, 25, 250, 1500, 11000], time: [3, 3, 3, 2, 2], price: [500, 5000, 50000, 430000] },
+        { name: "Cat", color: "#f49849", class: "🐾", rarity: "Common", cash: [5, 18, 170, 1700, 13000], time: [2, 2, 2, 2, 2], price: [480, 5500, 60000, 500000] },
+        { name: "Dog", color: "#995b3c", class: "🐾", rarity: "Common", cash: [7, 25, 220, 1900, 9000], time: [3, 3, 2, 2, 1], price: [460, 6600, 70000, 730000] },
+        { name: "Goldfish", color: "#f18221", class: "🐾", rarity: "Common", cash: [5, 40, 350, 3500, 35000], time: [3, 3, 3, 3, 3], price: [750, 7200, 84000, 950000] },
+        { name: "Rabbit", color: "#e7bf9a", class: "🐾", rarity: "Common", cash: [3, 18, 185, 800, 7000], time: [2, 2, 2, 1, 1], price: [500, 5800, 56000, 550000] },
+        { name: "Hamster", color: "#ce9176", class: "🐾", rarity: "Common", cash: [10, 45, 450, 4500, 45000], time: [4, 4, 4, 4, 4], price: [650, 6500, 80000, 930000] },
+        { name: "Turtle", color: "#619a3c", class: "🐾", rarity: "Common", cash: [23, 120, 1400, 15000, 170000], time: [10, 10, 10, 10, 10], price: [700, 8500, 110000, 1300000] },
+        { name: "Puppy", color: "#414042", class: "🐾", rarity: "Common", cash: [4, 10, 75, 500, 3000], time: [1, 1, 1, 1, 1], price: [450, 4000, 35000, 250000] },
+        { name: "Kitten", color: "#58595b", class: "🐾", rarity: "Common", cash: [4, 8, 60, 400, 2000], time: [1, 1, 1, 1, 1], price: [350, 3500, 26000, 170000] },
+        { name: "Bear", color: "#995b3c", class: "🌲", rarity: "Common", cash: [12, 70, 550, 4500, 100000], time: [7, 7, 6, 5, 5], price: [550, 5500, 63000, 1600000] },
+        { name: "Moose", color: "#995b3c", class: "🌲", rarity: "Common", cash: [8, 45, 400, 3500, 26000], time: [5, 5, 4, 4, 3], price: [520, 6500, 58000, 700000] },
+        { name: "Fox", color: "#f49849", class: "🌲", rarity: "Common", cash: [7, 15, 80, 550, 3000], time: [2, 2, 1, 1, 1], price: [400, 4000, 36000, 240000] },
+        { name: "Raccoon", color: "#6d6e71", class: "🌲", rarity: "Common", cash: [5, 14, 185, 1900, 19000], time: [2, 2, 2, 2, 2], price: [400, 5000, 71000, 800000] },
+        { name: "Squirrel", color: "#d25927", class: "🌲", rarity: "Common", cash: [3, 10, 65, 470, 2600], time: [1, 1, 1, 1, 1], price: [420, 3600, 32000, 210000] },
+        { name: "Owl", color: "#594a42", class: "🌲", rarity: "Common", cash: [4, 17, 155, 1500, 15000], time: [2, 2, 2, 2, 2], price: [500, 4800, 55000, 580000] },
+        { name: "Hedgehog", color: "#3f312b", class: "🌲", rarity: "Common", cash: [11, 37, 340, 2200, 30000], time: [5, 4, 3, 2, 2], price: [540, 7000, 77000, 1200000] },
+        { name: "Seal", color: "#7ca1d5", class: "❄️", rarity: "Common", cash: [6, 17, 150, 1200, 13000], time: [2, 2, 2, 2, 2], price: [480, 4500, 43000, 520000] },
+        { name: "Arctic Fox", color: "#7ca1d5", class: "❄️", rarity: "Common", cash: [5, 18, 180, 850, 8500], time: [2, 2, 2, 1, 1], price: [520, 550, 61000, 680000] },
+        { name: "Snowy Owl", color: "#feda3f", class: "❄️", rarity: "Common", cash: [5, 20, 190, 1900, 16000], time: [3, 3, 2, 2, 2], price: [370, 5300, 76000, 620000] },
+        { name: "Arctic Hare", color: "#7ca1d5", class: "❄️", rarity: "Common", cash: [6, 19, 85, 900, 7000], time: [2, 2, 1, 1, 1], price: [540, 5200, 66000, 550000] },
+        { name: "Penguin", color: "#fb8640", class: "❄️", rarity: "Common", cash: [4, 21, 310, 3200, 33000], time: [3, 3, 3, 3, 3], price: [400, 6500, 76000, 870000] },
+        { name: "Baby Penguin", color: "#414042", class: "❄️", rarity: "Common", cash: [3, 8, 70, 450, 2700], time: [1, 1, 1, 1, 1], price: [420, 3300, 33000, 230000] },
+        { name: "Polar Bear", color: "#7ca1d5", class: "❄️", rarity: "Common", cash: [12, 75, 700, 6500, 85000], time: [8, 7, 6, 5, 5], price: [630, 7000, 91000, 1400000] },
+        { name: "Walrus", color: "#7d4f33", class: "❄️", rarity: "Common", cash: [11, 46, 420, 3700, 51000], time: [5, 5, 4, 4, 4], price: [550, 6200, 68000, 1000000] },
+        { name: "Tiger", color: "#f18221", class: "🌴", rarity: "Common", cash: [6, 20, 100, 975, 7500], time: [3, 3, 1, 1, 1], price: [390, 6000, 70000, 610000] },
+        { name: "Jaguar", color: "#fbb040", class: "🌴", rarity: "Common", cash: [8, 28, 230, 1600, 17000], time: [3, 3, 2, 2, 2], price: [390, 6000, 70000, 610000] },
+        { name: "Toucan", color: "#ffca34", class: "🌴", rarity: "Common", cash: [9, 20, 175, 625, 3800], time: [2, 2, 2, 1, 1], price: [520, 4800, 42000, 300000] },
+        { name: "Cockatoo", color: "#7ca1d5", class: "🌴", rarity: "Common", cash: [6, 35, 160, 1700, 18000], time: [4, 4, 2, 2, 2], price: [500, 5000, 63000, 700000] },
+        { name: "Macaw", color: "#00aeef", class: "🌴", rarity: "Common", cash: [3, 8, 85, 850, 8500], time: [1, 1, 1, 1, 1], price: [480, 5400, 62000, 630000] },
+        { name: "Parrot", color: "#ed1c24", class: "🌴", rarity: "Common", cash: [3, 9, 90, 900, 9000], time: [1, 1, 1, 1, 1], price: [540, 5700, 65000, 690000] },
+        { name: "Panther", color: "#2f2c38", class: "🌴", rarity: "Common", cash: [12, 28, 215, 2100, 21000], time: [5, 3, 2, 2, 2], price: [530, 6500, 76000, 870000] },
+        { name: "Anaconda", color: "#8a9143", class: "🌴", rarity: "Common", cash: [3, 15, 85, 1500, 7600], time: [1, 2, 1, 2, 1], price: [410, 5100, 58000, 590000] },
+        { name: "Orangutan", color: "#bc6234", class: "🌴", rarity: "Common", cash: [13, 52, 570, 4300, 70000], time: [5, 5, 5, 4, 4], price: [600, 7000, 80000, 1400000] },
+        { name: "Capuchin", color: "#e0b0a6", class: "🌴", rarity: "Common", cash: [4, 14, 160, 780, 8200], time: [2, 2, 2, 1, 1], price: [390, 4700, 57000, 680000] },
+        { name: "Elf", color: "#a7d054", class: "⚔️", rarity: "Uncommon", cash: [5000, 15000, 150000, 1500000, 10000000], time: [1, 1, 1, 1, 1], price: [800000, 9000000, 110000000, 800000000] },
+        { name: "Witch", color: "#4ab96d", class: "⚔️", rarity: "Uncommon", cash: [18000, 60000, 40000, 4000000, 35000000], time: [3, 3, 2, 2, 2], price: [1100000, 12000000, 150000000, 1400000000] },
+        { name: "Wizard", color: "#5a459c", class: "⚔️", rarity: "Uncommon", cash: [19500, 65000, 440000, 4600000, 4000000], time: [3, 3, 2, 2, 2], price: [1300000, 13500000, 160000000, 1600000000] },
+        { name: "Fairy", color: "#df6d9c", class: "⚔️", rarity: "Uncommon", cash: [18500, 60000, 620000, 4400000, 38000000], time: [3, 3, 3, 2, 2], price: [1200000, 12500000, 15000000, 1500000000] },
+        { name: "Slime Monster", color: "#2fa04a", class: "⚔️", rarity: "Uncommon", cash: [35000, 140000, 1000000, 11000000, 110000000], time: [5, 5, 4, 4, 4], price: [1600000, 15000000, 200000000, 2300000000] },
+        { name: "Jester", color: "#be1e2d", class: "⚔️", rarity: "Rare", cash: [25000, 100000, 680000, 6500000, 32000000], time: [3, 3, 2, 2, 1], price: [2000000, 21000000, 230000000, 2600000000] },
+        { name: "Dragon", color: "#2fa04a", class: "⚔️", rarity: "Rare", cash: [36000, 150000, 1500000, 15000000, 150000000], time: [4, 4, 4, 4, 4], price: [2300000, 24000000, 270000000, 3000000000] },
+        { name: "Unicorn", color: "#f6afce", class: "⚔️", rarity: "Epic", cash: [24000, 150000, 1400000, 7000000, 75000000], time: [2, 2, 2, 1, 1], price: [4500000, 45000000, 550000000, 6500000000] },
+        { name: "Queen", color: "#9e1f63", class: "⚔️", rarity: "Rare", cash: [24000, 95000, 950000, 9700000, 95000000], time: [3, 3, 3, 3, 3], price: [1900000, 20000000, 230000000, 2500000000] },
+        { name: "King", color: "#ee2640", class: "⚔️", rarity: "Legendary", cash: [75000, 400000, 6000000, 90000000, 1250000000], time: [5, 5, 5, 5, 5], price: [6000000, 95000000, 1600000000, 25000000000] },
+        { name: "Two of Spades", color: "#414042", class: "🃏", rarity: "Uncommon", cash: [4500, 14000, 140000, 1400000, 9000000], time: [1, 1, 1, 1, 1], price: [770000, 8300000, 98000000, 710000000] },
+        { name: "Eat Me", color: "#d58c55", class: "🃏", rarity: "Uncommon", cash: [13000, 45000, 450000, 4500000, 50000000], time: [2, 2, 2, 2, 2], price: [1300000, 14000000, 160000000, 2000000000] },
+        { name: "Drink Me", color: "#dd7399", class: "🃏", rarity: "Uncommon", cash: [12000, 40000, 400000, 4000000, 45000000], time: [2, 2, 2, 2, 2], price: [1200000, 12000000, 140000000, 1800000000] },
+        { name: "Alice", color: "#4cc9f5", class: "🃏", rarity: "Uncommon", cash: [13000, 42000, 210000, 2100000, 23000000], time: [2, 2, 1, 1, 1], price: [1200000, 13000000, 150000000, 1900000000] },
+        { name: "Queen of Hearts", color: "#d62027", class: "🃏", rarity: "Uncommon", cash: [23000, 87000, 620000, 7500000, 90000000], time: [4, 4, 3, 3, 3], price: [1300000, 13000000, 180000000, 2400000000] },
+        { name: "Dormouse", color: "#89d6f8", class: "🃏", rarity: "Rare", cash: [17000, 68000, 700000, 3500000, 35000000], time: [2, 2, 1, 1, 1], price: [2000000, 22000000, 250000000, 2800000000] },
+        { name: "White Rabbit", color: "#ffcd05", class: "🃏", rarity: "Rare", cash: [26000, 105000, 11000000, 7700000, 72000000], time: [3, 3, 3, 2, 2], price: [2000000, 23000000, 280000000, 2900000000] },
+        { name: "Cheshire Cat", color: "#dd7399", class: "🃏", rarity: "Rare", cash: [32000, 100000, 900000, 9000000, 60000000], time: [4, 3, 3, 3, 2], price: [1800000, 19000000, 220000000, 2400000000] },
+        { name: "Caterpillar", color: "#00c0f3", class: "🃏", rarity: "Epic", cash: [10000, 70000, 650000, 7500000, 85000000], time: [1, 1, 1, 1, 1], price: [4200000, 42000000, 540000000, 6900000000] },
+        { name: "Mad Hatter", color: "#914f93", class: "🃏", rarity: "Epic", cash: [38000, 250000, 1500000, 14000000, 80000000], time: [3, 3, 2, 2, 1], price: [4800000, 48000000, 520000000, 6600000000] },
+        { name: "King of Hearts", color: "#c62127", class: "🃏", rarity: "Legendary", cash: [80000, 420000, 6800000, 100000000, 1500000000], time: [5, 5, 5, 5, 5], price: [7000000, 110000000, 1800000000, 30000000000] },
+        { name: "Earth", color: "#416eb5", class: "🚀", rarity: "Uncommon", cash: [15000, 45000, 600000, 6500000, 65000000], time: [3, 3, 3, 3, 3], price: [1000000, 11000000, 150000000, 1700000000] },
+        { name: "Meteor", color: "#c68c3c", class: "🚀", rarity: "Uncommon", cash: [23000, 65000, 700000, 4500000, 20000000], time: [5, 4, 3, 2, 1], price: [950000, 13000000, 160000000, 1600000000] },
+        { name: "Stars", color: "#19184d", class: "🚀", rarity: "Uncommon", cash: [10000, 40000, 200000, 2000000, 18000000], time: [2, 2, 1, 1, 1], price: [1400000, 14000000, 150000000, 1500000000] },
+        { name: "Alien", color: "#8dc63f", class: "🚀", rarity: "Uncommon", cash: [30000, 100000, 1000000, 11000000, 85000000], time: [4, 4, 4, 4, 4], price: [1500000, 17000000, 190000000, 1700000000] },
+        { name: "Planet", color: "#9dc6ea", class: "🚀", rarity: "Rare", cash: [25000, 100000, 900000, 9000000, 90000000], time: [3, 3, 3, 3, 3], price: [2000000, 21000000, 210000000, 2400000000] },
+        { name: "UFO", color: "#a15095", class: "🚀", rarity: "Rare", cash: [17000, 70000, 700000, 7000000, 70000000], time: [2, 2, 2, 2, 2], price: [2100000, 23000000, 250000000, 2800000000] },
+        { name: "Spaceship", color: "#ffcb29", class: "🚀", rarity: "Epic", cash: [60000, 320000, 2100000, 15000000, 85000000], time: [5, 4, 3, 2, 1], price: [4800000, 46000000, 540000000, 6800000000] },
+        { name: "Astronaut", color: "#9bd4ee", class: "🚀", rarity: "Legendary", cash: [45000, 260000, 2500000, 38000000, 550000000], time: [3, 3, 2, 2, 2], price: [6500000, 100000000, 1700000000, 27000000000] },
+        { name: "Lil Bot", color: "#3e564a", class: "🤖", rarity: "Uncommon", cash: [4000, 12000, 180000, 1900000, 25000000], time: [1, 1, 1, 1, 1], price: [730000, 12000000, 130000000, 1900000000] },
+        { name: "Lovely Bot", color: "#f179af", class: "🤖", rarity: "Uncommon", cash: [16000, 65000, 650000, 4800000, 42000000], time: [3, 3, 3, 2, 2], price: [1300000, 14000000, 170000000, 1600000000] },
+        { name: "Angry Bot", color: "#f1613a", class: "🤖", rarity: "Uncommon", cash: [22000, 85000, 800000, 6200000, 65000000], time: [4, 4, 4, 3, 3], price: [1200000, 13000000, 150000000, 1700000000] },
+        { name: "Happy Bot", color: "#51ba6b", class: "🤖", rarity: "Uncommon", cash: [11000, 45000, 500000, 2500000, 30000000], time: [2, 2, 2, 1, 1], price: [1400000, 15000000, 180000000, 2400000000] },
+        { name: "Watson", color: "#d69b5a", class: "🤖", rarity: "Rare", cash: [24000, 100000, 1000000, 10000000, 100000000], time: [3, 3, 3, 3, 3], price: [2000000, 22000000, 240000000, 2600000000] },
+        { name: "Buddy Bot", color: "#9dc6ea", class: "🤖", rarity: "Rare", cash: [22000, 95000, 650000, 6500000, 65000000], time: [3, 3, 2, 2, 2], price: [1900000, 21000000, 230000000, 2500000000] },
+        { name: "Brainy Bot", color: "#9ecf7a", class: "🤖", rarity: "Epic", cash: [50000, 250000, 2100000, 21000000, 170000000], time: [4, 3, 3, 3, 2], price: [5000000, 46000000, 500000000, 6700000000] },
+        { name: "Mega Bot", color: "#d71f27", class: "🤖", rarity: "Legendary", cash: [80000, 430000, 4200000, 62000000, 1000000000], time: [5, 5, 3, 3, 3], price: [7000000, 120000000, 1900000000, 35000000000] }
+    ];
+
+    let targetObj = null;
+
+    function scanDeep(obj, depth = 0) {
+        if (depth > 8 || targetObj) return;
+        if (!obj || typeof obj !== 'object') return;
+
+        if (obj.factories && Array.isArray(obj.factories)) {
+            targetObj = obj;
+            return;
+        }
+
+        if (Array.isArray(obj)) {
+            obj.forEach(item => scanDeep(item, depth + 1));
+        } else {
+            if (obj.props) scanDeep(obj.props, depth + 1);
+            if (obj.children) scanDeep(obj.children, depth + 1);
+            if (obj.memoizedProps) scanDeep(obj.memoizedProps, depth + 1);
+            if (obj.memoizedState) scanDeep(obj.memoizedState, depth + 1);
+        }
+    }
+
+    const root = document.querySelector('#app') || document.body;
+    function traverseDOM(node) {
+        if (targetObj) return;
+        const k = Object.keys(node).find(key => key.startsWith('__reactFiber'));
+        if (k) scanDeep(node[k]);
+        for (const child of node.children) traverseDOM(child);
+    }
+    traverseDOM(root);
+
+    if (targetObj) {
+
+        let iframe = document.createElement('iframe');
+        document.body.append(iframe);
+        const input = blook.name;
+        iframe.remove();
+
+        if (!input) return;
+
+        const chosenBlook = factoryBlooks.find(b => b.name.toLowerCase() === input.toLowerCase());
+
+        if (chosenBlook) {
+
+            const maxSlots = 10; 
+            const currentLen = targetObj.factories.length;
+
+            const newBlook = { ...chosenBlook, level: 4, bonus: 1 }; 
+
+            if (currentLen < maxSlots) {
+                targetObj.factories.push(newBlook);
+                alert(`✅ Added ${chosenBlook.name}!`);
+            } else {
+
+                targetObj.factories[maxSlots - 1] = newBlook;
+                alert(`✅ Replaced last slot with ${chosenBlook.name}!`);
+            }
+
+            alert("IMPORTANT: Buy any upgrade or click a blook to see the change!");
+
+        } else {
+            alert("❌ Invalid Blook Name! Check spelling.");
+        }
+    } else {
+        alert("❌ Could not find factories container.");
+    }
+})();
+
+
                         },
                     },
                     {
@@ -5196,74 +7625,288 @@ name: "Set Next Fish",
                         name: "Max Blooks",
                         description: "Maxes out all your blooks' levels",
                         run: function () {
-                            getStateNode().state.blooks.forEach((blook) => (blook.level = 4));
+(() => {
+    console.clear();
+    console.log("💉 Factory: Maxing Levels...");
+
+    let foundFactories = null;
+
+    function scanDeep(obj, depth = 0) {
+        if (depth > 8 || foundFactories) return;
+        if (!obj || typeof obj !== 'object') return;
+
+        if (obj.factories && Array.isArray(obj.factories) && obj.factories.length > 0) {
+            const sample = obj.factories[0];
+            if (sample.cash && sample.level !== undefined) {
+                foundFactories = obj.factories;
+                return;
+            }
+        }
+
+        if (Array.isArray(obj)) {
+            obj.forEach(item => scanDeep(item, depth + 1));
+        } else {
+            if (obj.props) scanDeep(obj.props, depth + 1);
+            if (obj.children) scanDeep(obj.children, depth + 1);
+            if (obj.memoizedProps) scanDeep(obj.memoizedProps, depth + 1);
+            if (obj.memoizedState) scanDeep(obj.memoizedState, depth + 1);
+        }
+    }
+
+    const root = document.querySelector('#app') || document.body;
+    function traverseDOM(node) {
+        if (foundFactories) return;
+        const k = Object.keys(node).find(key => key.startsWith('__reactFiber'));
+        if (k) scanDeep(node[k]);
+        for (const child of node.children) traverseDOM(child);
+    }
+    traverseDOM(root);
+
+    if (foundFactories) {
+        let count = 0;
+        foundFactories.forEach(factory => {
+            factory.level = 4;
+
+            count++;
+        });
+
+        let iframe = document.createElement('iframe');
+        document.body.append(iframe);
+        iframe.contentWindow.alert(`✅ Set ${count} blooks to Level 4!\n\nIMPORTANT: Perform any action (buy/upgrade) to see the visual change.`);
+        iframe.remove();
+    } else {
+        alert("❌ Could not find factories. Make sure you have at least one blook!");
+    }
+})();
+
+
                         },
+                    },
+                    {
+                        name: "Make Blooks OP",
+                        description: "Make all your blooks OP",
+                        run: function () {
+(() => {
+    console.clear();
+    console.log("💉 Factory: Making Blooks OP...");
+
+    let foundFactories = null;
+
+    function scanDeep(obj, depth = 0) {
+        if (depth > 8 || foundFactories) return;
+        if (!obj || typeof obj !== 'object') return;
+
+        if (obj.factories && Array.isArray(obj.factories) && obj.factories.length > 0) {
+            const sample = obj.factories[0];
+            if (sample.cash && Array.isArray(sample.cash) && sample.name) {
+                foundFactories = obj.factories;
+                return;
+            }
+        }
+
+        if (Array.isArray(obj)) {
+            obj.forEach(item => scanDeep(item, depth + 1));
+        } else {
+            if (obj.props) scanDeep(obj.props, depth + 1);
+            if (obj.children) scanDeep(obj.children, depth + 1);
+            if (obj.memoizedProps) scanDeep(obj.memoizedProps, depth + 1);
+            if (obj.memoizedState) scanDeep(obj.memoizedState, depth + 1);
+        }
+    }
+
+    const root = document.querySelector('#app') || document.body;
+    function traverseDOM(node) {
+        if (foundFactories) return;
+        const k = Object.keys(node).find(key => key.startsWith('__reactFiber'));
+        if (k) {
+            scanDeep(node[k]);
+        }
+        for (const child of node.children) traverseDOM(child);
+    }
+    traverseDOM(root);
+
+    if (foundFactories) {
+        let count = 0;
+        foundFactories.forEach(factory => {
+
+            factory.cash = [1e9, 1e9, 1e9, 1e9, 1e9]; 
+
+            factory.time = [0.01, 0.01, 0.01, 0.01, 0.01]; 
+
+            count++;
+        });
+
+        let iframe = document.createElement('iframe');
+        document.body.append(iframe);
+        iframe.contentWindow.alert(`✅ Made ${count} blooks OP!\n\nIMPORTANT: Buy an upgrade or a new blook to force the stats to update.`);
+        iframe.remove();
+    } else {
+        alert("❌ Could not find factories. Make sure you have at least one blook!");
+    }
+})();
+
+
+                        }
                     },
                     {
                         name: "Remove Glitches",
                         description: "Removes all enemy glitches",
                         run: function () {
-                            let stateNode = getStateNode();
-                            stateNode.setState({
-                                bits: 0,
-                                ads: [],
-                                hazards: [],
-                                color: "",
-                                lol: false,
-                                joke: false,
-                                slow: false,
-                                dance: false,
-                                glitch: "",
-                                glitcherName: "",
-                                glitcherBlook: "",
-                            });
-                            clearTimeout(stateNode.adTimeout);
-                            clearInterval(stateNode.hazardInterval);
-                            clearTimeout(stateNode.nightTimeout);
-                            clearTimeout(stateNode.glitchTimeout);
-                            clearTimeout(stateNode.lolTimeout);
-                            clearTimeout(stateNode.jokeTimeout);
-                            clearTimeout(stateNode.slowTimeout);
-                            clearTimeout(stateNode.danceTimeout);
-                            clearTimeout(stateNode.nameTimeout);
-                        },
-                    },
-                    {
-                        name: "Send Glitch",
-                        description: "Sends a glitch to everyone else playing",
-                        inputs: [
-                            {
-                                name: "Glitch",
-                                type: "options",
-                                options: Object.entries({ lb: "Lunch Break", as: "Ad Spam", e37: "Error 37", nt: "Night Time", lo: "#LOL", j: "Jokester", sm: "Slow Mo", dp: "Dance Party", v: "Vortex", r: "Reverse", f: "Flip", m: "Micro" }).map(
-                                    ([value, name]) => ({ name, value })
-                                ),
-                            },
-                        ],
-                        run: function (val) {
-                            let stateNode = getStateNode();
-                            stateNode.safe = true;
-                            stateNode.props.liveGameController.setVal({ path: `c/${stateNode.props.client.name}/tat`, val });
+(() => {
+    console.clear();
+    console.log("🛡️ HUNTING GLITCH STRINGS IN MEMORY...");
+
+    const glitchNames = [
+        "Lunch Break", "Ad Spam", "Error 37", "Night Time", "#LOL", 
+        "Jokester", "Slow Mo", "Dance Party", "Vortex", "Reverse", "Flip", "Micro"
+    ];
+
+    let foundCount = 0;
+    let visited = new Set();
+
+    function clearState(obj, key) {
+        console.log(`%c🔥 FOUND GLITCH: "${obj[key]}" in key "${key}"`, "color: red; font-weight: bold;");
+        console.log("   Object:", obj);
+
+        obj[key] = ""; 
+
+        if (Array.isArray(obj.ads)) obj.ads = [];
+        if (Array.isArray(obj.hazards)) obj.hazards = [];
+        if (typeof obj.lol === 'boolean') obj.lol = false;
+        if (typeof obj.night === 'boolean') obj.night = false;
+        if (typeof obj.joke === 'boolean') obj.joke = false;
+        if (typeof obj.slow === 'boolean') obj.slow = false;
+        if (typeof obj.dance === 'boolean') obj.dance = false;
+        if (typeof obj.color === 'string') obj.color = "";
+
+        foundCount++;
+    }
+
+    function scanDeep(obj, depth = 0) {
+        if (!obj || typeof obj !== 'object' || depth > 10) return;
+        if (visited.has(obj)) return;
+        visited.add(obj);
+
+        for (const key in obj) {
+            const val = obj[key];
+
+            if (typeof val === 'string') {
+
+                for (const gName of glitchNames) {
+                    if (val === gName) {
+                        clearState(obj, key);
+
+                    }
+                }
+            }
+
+            if (key.startsWith('_') && key !== '_owner') continue;
+
+            if (typeof val === 'object') {
+                scanDeep(val, depth + 1);
+            }
+        }
+    }
+
+    const root = document.querySelector('#app') || document.body;
+    function traverseDOM(node) {
+        const k = Object.keys(node).find(key => key.startsWith('__reactFiber'));
+        if (k) {
+            const fiber = node[k];
+
+            if (fiber.memoizedState) scanDeep(fiber.memoizedState);
+
+            if (fiber.memoizedProps) scanDeep(fiber.memoizedProps);
+        }
+        for (const child of node.children) traverseDOM(child);
+    }
+    traverseDOM(root);
+
+    if (foundCount > 0) {
+        let iframe = document.createElement('iframe');
+        document.body.append(iframe);
+        iframe.contentWindow.alert(`✅ Found and cleared ${foundCount} glitch objects in memory!`);
+        iframe.remove();
+    } else {
+        alert("❌ No active glitch strings found in memory. \n(Wait until you actually have a glitch active, then run this!)");
+    }
+})();
+
+
                         },
                     },
                     {
                         name: "Set All MegaBot",
                         description: "Sets all your blooks to maxed out Mega Bots",
                         run: function () {
-                            getStateNode().setState({
-                                blooks: Array.from({ length: 10 }, () => ({
-                                    name: "Mega Bot",
-                                    color: "#d71f27",
-                                    class: "🤖",
-                                    rarity: "Legendary",
-                                    cash: [8e4, 43e4, 42e5, 62e6, 1e9],
-                                    time: [5, 5, 3, 3, 3],
-                                    price: [7e6, 12e7, 19e8, 35e9],
-                                    active: false,
-                                    level: 4,
-                                    bonus: 5.5,
-                                })),
-                            });
+(() => {
+    console.clear();
+    console.log("🏭 Factory: Setting all to Mega Bots...");
+
+    let targetObj = null;
+
+    function scanDeep(obj, depth = 0) {
+        if (depth > 8 || targetObj) return;
+        if (!obj || typeof obj !== 'object') return;
+
+        if (obj.factories && Array.isArray(obj.factories)) {
+            targetObj = obj;
+            return;
+        }
+
+        if (Array.isArray(obj)) {
+            obj.forEach(item => scanDeep(item, depth + 1));
+        } else {
+            if (obj.props) scanDeep(obj.props, depth + 1);
+            if (obj.children) scanDeep(obj.children, depth + 1);
+            if (obj.memoizedProps) scanDeep(obj.memoizedProps, depth + 1);
+            if (obj.memoizedState) scanDeep(obj.memoizedState, depth + 1);
+        }
+    }
+
+    const root = document.querySelector('#app') || document.body;
+    function traverseDOM(node) {
+        if (targetObj) return;
+        const k = Object.keys(node).find(key => key.startsWith('__reactFiber'));
+        if (k) scanDeep(node[k]);
+        for (const child of node.children) traverseDOM(child);
+    }
+    traverseDOM(root);
+
+    if (targetObj) {
+
+        const megaBot = {
+            name: "Mega Bot",
+            color: "#d71f27",
+            class: "🤖",
+            rarity: "Legendary",
+            cash: [80000, 430000, 4200000, 62000000, 1000000000],
+            time: [5, 5, 3, 3, 3],
+            price: [7000000, 120000000, 1900000000, 35000000000],
+            active: false,
+            level: 4,
+            bonus: 5.0
+        };
+
+        const arr = targetObj.factories;
+        arr.length = 0; 
+
+        for (let i = 0; i < 10; i++) {
+
+            arr.push({ ...megaBot });
+        }
+
+        let iframe = document.createElement('iframe');
+        document.body.append(iframe);
+        iframe.contentWindow.alert("✅ Factory replaced with 10 Mega Bots!\n\nIMPORTANT: Buy an upgrade or click a blook to refresh the visuals.");
+        iframe.remove();
+
+    } else {
+        alert("❌ Could not find factories container. Place at least one blook first.");
+    }
+})();
+
+
                         },
                     },
                     {
@@ -5276,7 +7919,64 @@ name: "Set Next Fish",
                             },
                         ],
                         run: function (cash) {
-                            getStateNode().setState({ cash });
+(() => {
+    console.clear();
+    console.log("🏦 Factory: Setting Exact Cash...");
+
+    let gameState = null;
+
+    function scanDeep(obj, depth = 0) {
+        if (depth > 8 || gameState) return;
+        if (!obj || typeof obj !== 'object') return;
+
+        if (obj.factories && typeof obj.addCash === 'function' && obj.cash !== undefined) {
+            gameState = obj;
+            return;
+        }
+
+        if (Array.isArray(obj)) {
+            obj.forEach(item => scanDeep(item, depth + 1));
+        } else {
+            if (obj.props) scanDeep(obj.props, depth + 1);
+            if (obj.children) scanDeep(obj.children, depth + 1);
+            if (obj.memoizedProps) scanDeep(obj.memoizedProps, depth + 1);
+            if (obj.memoizedState) scanDeep(obj.memoizedState, depth + 1);
+        }
+    }
+
+    const root = document.querySelector('#app') || document.body;
+    function traverseDOM(node) {
+        if (gameState) return;
+        const k = Object.keys(node).find(key => key.startsWith('__reactFiber'));
+        if (k) scanDeep(node[k]);
+        for (const child of node.children) traverseDOM(child);
+    }
+    traverseDOM(root);
+
+    if (gameState) {
+        const current = gameState.cash;
+
+        let iframe = document.createElement('iframe');
+        document.body.append(iframe);
+        const input = cash;
+        iframe.remove();
+
+        if (input !== null) {
+            const target = parseFloat(input);
+            if (!isNaN(target)) {
+                const diff = target - gameState.cash;
+
+                gameState.addCash(diff);
+
+                alert(`✅ Cash set to ${target}!`);
+            }
+        }
+    } else {
+        alert("❌ Could not find Game Controller.");
+    }
+})();
+
+
                         },
                     },
                 ],
