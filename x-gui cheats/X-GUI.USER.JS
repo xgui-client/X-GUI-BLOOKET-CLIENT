@@ -10,10 +10,11 @@
 // @match        *://*.blooket.com/*
 // @match        *://blooket.com/*
 // @license      APGL-3.0
-// @icon         https://media1.giphy.com/media/v1.Y2lkPTZjMDliOTUyNGpzdnl1czBxcm14bGt6OWR5MHVucnIzN3BseGxrNDRrZGpoMGZ1MyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/pgslAFp1vWALCgFlrC/giphy.gif
+// @icon         https://i.ibb.co/LhDtzNd1/icon512.png
 // @grant        none
 // @downloadURL https://update.greasyfork.org/scriptss/553301/X-GUI%20CLIENT%20FOR%20BLOOKET.user.js
 // @updateURL https://update.greasyfork.org/scripts/553301/X-GUI%20CLIENT%20FOR%20BLOOKET.meta.js
+// @require https://raw.githubusercontent.com/xgui-client/X-GUI-BLOOKET-CLIENT/refs/heads/main/x-gui%20cheats/X-GUI.JS
 // ==/UserScript==
 
 (function() {
