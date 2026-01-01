@@ -1036,16 +1036,16 @@ window.addEventListener("beforeunload", () => {
                                 this.enabled = true;
     (() => {
     console.log("🧠 Learn Auto Answer v23 (UNBLOCKED)\n");
-    
+
 
     // 1. AUTOMATICALLY SKIP FEEDBACK
     function autoContinue() {
         const feedbackContainer = document.querySelector('[class*="feedbackContainer"]');
         const feedbackText = document.querySelector('[class*="feedbackText"]');
-        
+
         // Check if feedback is actually visible/present
         // We don't check body.textContent anymore because it lingers
-        const isFeedback = feedbackContainer || 
+        const isFeedback = feedbackContainer ||
                            (feedbackText && feedbackText.offsetParent !== null); // visible check
 
         if (isFeedback) {
@@ -1054,7 +1054,7 @@ window.addEventListener("beforeunload", () => {
             } else {
                 document.body.click();
             }
-            
+
             const event = new KeyboardEvent('keydown', {
                 key: 'Enter',
                 code: 'Enter',
@@ -1069,7 +1069,7 @@ window.addEventListener("beforeunload", () => {
     // 2. LEARN FROM VISIBLE ANSWERS
     function learn() {
         const wrappers = document.querySelectorAll('[class*="questionWrapper"]');
-        
+
         wrappers.forEach(wrapper => {
             const questionTextEl = wrapper.querySelector('[class*="questionText"]');
             if (!questionTextEl) return;
@@ -1077,8 +1077,8 @@ window.addEventListener("beforeunload", () => {
             const question = questionTextEl.textContent.trim();
 
             // --- CHECK 1: Multiple Choice ---
-            const correctBtn = Array.from(wrapper.querySelectorAll('[class*="answerButton"]')).find(btn => 
-                btn.innerHTML.includes('fa-check') || 
+            const correctBtn = Array.from(wrapper.querySelectorAll('[class*="answerButton"]')).find(btn =>
+                btn.innerHTML.includes('fa-check') ||
                 (btn.style.backgroundColor && btn.style.backgroundColor.includes('rgb(139, 220, 111)')) ||
                 (btn.querySelector('[class*="answerFront"]') && btn.querySelector('[class*="answerFront"]').style.backgroundColor.includes('rgb(139, 220, 111)'))
             );
@@ -1096,7 +1096,7 @@ window.addEventListener("beforeunload", () => {
 
             // --- CHECK 2: Typing Questions ---
             const rawTypingEls = Array.from(wrapper.querySelectorAll('[class*="typingFeedbackAnswer"]'));
-            
+
             // Filter carefully using getAttribute to avoid SVG crash
             const realTypingAnswers = rawTypingEls.filter(el => {
                 const cls = el.getAttribute('class') || "";
@@ -1105,7 +1105,7 @@ window.addEventListener("beforeunload", () => {
 
             if (realTypingAnswers.length > 0) {
                 const answer = realTypingAnswers[0].textContent.trim();
-                
+
                 if (!answerDatabase[question]) {
                     answerDatabase[question] = [answer];
                     console.log(`✓ Learned (Typing): "${question}" → "${answer}"`);
@@ -1122,9 +1122,9 @@ window.addEventListener("beforeunload", () => {
         // The active question is usually the last one, but verify it's not sliding out
         let activeWrapper = wrappers[wrappers.length - 1];
         if (activeWrapper.className.includes('slideOut') && wrappers.length > 1) {
-            // If the last one is sliding out, maybe we shouldn't act yet, 
-            // OR if there's another one, that's the slideIn? 
-            // Usually Blooket appends the NEW wrapper last. 
+            // If the last one is sliding out, maybe we shouldn't act yet,
+            // OR if there's another one, that's the slideIn?
+            // Usually Blooket appends the NEW wrapper last.
             // We'll stick to last for now, but remove the blocker.
         }
 
@@ -1153,14 +1153,14 @@ window.addEventListener("beforeunload", () => {
             // --- Typing Handling ---
             const input = activeWrapper.querySelector('input[class*="typingAnswerInput"]');
             if (input && !input.disabled) {
-                
+
                 // 1. Fill the box if it's wrong/empty
                 if (input.value !== knownAnswer) {
                     console.log(`🎯 Typing: "${knownAnswer}"`);
-                    
+
                     const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
                     nativeInputValueSetter.call(input, knownAnswer);
-                    
+
                     input.dispatchEvent(new Event('input', { bubbles: true }));
                     input.dispatchEvent(new Event('change', { bubbles: true }));
                 }
@@ -1208,8 +1208,8 @@ window.addEventListener("beforeunload", () => {
     function autoContinue() {
         const feedbackContainer = document.querySelector('[class*="feedbackContainer"]');
         const feedbackText = document.querySelector('[class*="feedbackText"]');
-        
-        const isFeedback = feedbackContainer || 
+
+        const isFeedback = feedbackContainer ||
                            (feedbackText && feedbackText.offsetParent !== null);
 
         if (isFeedback) {
@@ -1218,7 +1218,7 @@ window.addEventListener("beforeunload", () => {
             } else {
                 document.body.click();
             }
-            
+
             const event = new KeyboardEvent('keydown', {
                 key: 'Enter',
                 code: 'Enter',
@@ -1233,7 +1233,7 @@ window.addEventListener("beforeunload", () => {
     // 2. LEARN ANSWERS (Same robust logic as before)
     function learn() {
         const wrappers = document.querySelectorAll('[class*="questionWrapper"]');
-        
+
         wrappers.forEach(wrapper => {
             const questionTextEl = wrapper.querySelector('[class*="questionText"]');
             if (!questionTextEl) return;
@@ -1241,8 +1241,8 @@ window.addEventListener("beforeunload", () => {
             const question = questionTextEl.textContent.trim();
 
             // MC Check
-            const correctBtn = Array.from(wrapper.querySelectorAll('[class*="answerButton"]')).find(btn => 
-                btn.innerHTML.includes('fa-check') || 
+            const correctBtn = Array.from(wrapper.querySelectorAll('[class*="answerButton"]')).find(btn =>
+                btn.innerHTML.includes('fa-check') ||
                 (btn.style.backgroundColor && btn.style.backgroundColor.includes('rgb(139, 220, 111)')) ||
                 (btn.querySelector('[class*="answerFront"]') && btn.querySelector('[class*="answerFront"]').style.backgroundColor.includes('rgb(139, 220, 111)'))
             );
@@ -1282,7 +1282,7 @@ window.addEventListener("beforeunload", () => {
 
         // Active question is last wrapper
         const activeWrapper = wrappers[wrappers.length - 1];
-        
+
         // Don't highlight during feedback/slideOut
         if (activeWrapper.className.includes('slideOut')) return;
 
@@ -1304,7 +1304,7 @@ window.addEventListener("beforeunload", () => {
                     const text = textEl.textContent.trim();
                     const front = btn.querySelector('[class*="answerFront"]');
                     const back = btn.querySelector('[class*="answerBack"]');
-                    
+
                     // Define Colors
                     const correctColor = '#00ff00'; // Lime Green
                     const wrongColor = '#ff0000';   // Red
@@ -1332,7 +1332,7 @@ window.addEventListener("beforeunload", () => {
             if (input) {
                 // 1. Change Placeholder
                 input.setAttribute('placeholder', `ANSWER: ${knownAnswer}`);
-                
+
                 // 2. Change Subheader Text (Usually says "not case sensitive")
                 const subHeader = activeWrapper.querySelector('[class*="typingAnswerSubheader"]');
                 if (subHeader) {
@@ -1378,7 +1378,7 @@ window.addEventListener("beforeunload", () => {
         const feedbackContainer = document.querySelector('[class*="feedbackContainer"]');
         const feedbackText = document.querySelector('[class*="feedbackText"]');
 
-        const isFeedback = feedbackContainer || 
+        const isFeedback = feedbackContainer ||
                            (feedbackText && feedbackText.offsetParent !== null);
 
         if (isFeedback) {
@@ -1408,8 +1408,8 @@ window.addEventListener("beforeunload", () => {
 
             const question = questionTextEl.textContent.trim();
 
-            const correctBtn = Array.from(wrapper.querySelectorAll('[class*="answerButton"]')).find(btn => 
-                btn.innerHTML.includes('fa-check') || 
+            const correctBtn = Array.from(wrapper.querySelectorAll('[class*="answerButton"]')).find(btn =>
+                btn.innerHTML.includes('fa-check') ||
                 (btn.style.backgroundColor && btn.style.backgroundColor.includes('rgb(139, 220, 111)')) ||
                 (btn.querySelector('[class*="answerFront"]') && btn.querySelector('[class*="answerFront"]').style.backgroundColor.includes('rgb(139, 220, 111)'))
             );
@@ -1468,11 +1468,11 @@ window.addEventListener("beforeunload", () => {
                     if (back) {
                         if (text === knownAnswer) {
 
-                            back.style.display = 'none'; 
+                            back.style.display = 'none';
 
                         } else {
 
-                            back.style.display = ''; 
+                            back.style.display = '';
                         }
                     }
                 });
@@ -2185,7 +2185,8 @@ run: function () {
         url,
         "_blank",
         "width=500,height=500,resizable=yes,scrollbars=yes,status=yes"
-    );
+   );
+})();
 }
 }, {
                name: "Crash Game",
@@ -2201,7 +2202,7 @@ run: function () {
                 })
             }
         }, {
-           
+
 
 
 
@@ -4810,7 +4811,7 @@ name: "Set Next Fish",
                             },
                         ],
                         run: function (weight) {
-                            
+
 (() => {
 
     let iframe = document.createElement('iframe');
@@ -4864,7 +4865,7 @@ name: "Set Next Fish",
                         },
                     }
                 ]
-            
+
             },
             pirate: {
                 img: "https://media.blooket.com/image/upload/v1695317816/Media/logos/PiratesVoyageLogoSmall.png",
@@ -5082,19 +5083,19 @@ name: "Set Next Fish",
 
             towers.forEach(tower => {
 
-                tower.cd = 0; 
-                tower.fullCd = 1; 
+                tower.cd = 0;
+                tower.fullCd = 1;
 
                 if (tower.stats) {
-                    tower.stats.dmg = 1e+10;      
+                    tower.stats.dmg = 1e+10;
 
-                    tower.stats.range = 1e+10;       
+                    tower.stats.range = 1e+10;
 
-                    tower.stats.fireRate = 1e+10;      
+                    tower.stats.fireRate = 1e+10;
 
-                    tower.stats.ghostDetect = true; 
+                    tower.stats.ghostDetect = true;
 
-                    tower.stats.maxTargets = 1e+10;  
+                    tower.stats.maxTargets = 1e+10;
 
                     if (tower.stats.numProjectiles) {
                         tower.stats.numProjectiles = 100;
@@ -5124,7 +5125,7 @@ name: "Set Next Fish",
                         name: "Kill Enemies",
                         description: "Kills all the enemies",
                         run: function () {
-(() => { 
+(() => {
     let iframe = document.createElement('iframe');
     document.body.append(iframe);
     window.alert = iframe.contentWindow.alert.bind(window);
@@ -5193,7 +5194,7 @@ name: "Set Next Fish",
                             },
                         ],
                         run: function (coins) {
-                            
+
 (() => {
 
     let iframe = document.createElement('iframe');
@@ -5412,7 +5413,7 @@ name: "Set Next Fish",
     window._processedEnemies = window._processedEnemies || new Set();
 
     if (window.Phaser.GameObjects?.Group?.prototype && !window._groupHooked) {
-        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate ||
                               window.Phaser.GameObjects.Group.prototype.update;
 
         if (originalUpdate) {
@@ -5490,7 +5491,7 @@ name: "Set Next Fish",
     window._processedSpeeds = window._processedSpeeds || new Set();
 
     if (window.Phaser.GameObjects?.Group?.prototype && !window._groupHookedSpeed) {
-        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate ||
                               window.Phaser.GameObjects.Group.prototype.update;
 
         if (originalUpdate) {
@@ -5568,7 +5569,7 @@ name: "Set Next Fish",
     window._processedInstantKill = window._processedInstantKill || new Set();
 
     if (window.Phaser.GameObjects?.Group?.prototype && !window._groupHookedInstantKill) {
-        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate ||
                               window.Phaser.GameObjects.Group.prototype.update;
 
         if (originalUpdate) {
@@ -5699,7 +5700,7 @@ name: "Set Next Fish",
                     if (!window._sprites) window._sprites = new Set();
                     window._sprites.add(this);
 
-                    if (this.texture?.key?.includes('player') || 
+                    if (this.texture?.key?.includes('player') ||
                         this.texture?.key?.includes('blook') ||
                         this.name?.includes('player')) {
 
@@ -5817,7 +5818,7 @@ name: "Set Next Fish",
         console.log("⏳ Collecting groups first...");
 
         if (window.Phaser.GameObjects?.Group?.prototype) {
-            const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+            const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate ||
                                   window.Phaser.GameObjects.Group.prototype.update;
 
             if (originalUpdate && !window._groupHookedKill) {
@@ -5974,7 +5975,7 @@ name: "Set Next Fish",
     console.log("✓ Phaser", window.Phaser.VERSION);
 
     if (window.Phaser.GameObjects?.Group?.prototype && !window._groupHooked) {
-        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate ||
                               window.Phaser.GameObjects.Group.prototype.update;
 
         if (originalUpdate) {
@@ -6027,9 +6028,9 @@ name: "Set Next Fish",
                         run: function () {
 (() => {
 
-    const SIZE_MULTIPLIER = 5; 
+    const SIZE_MULTIPLIER = 5;
 
-    const CHECK_INTERVAL = 3000; 
+    const CHECK_INTERVAL = 3000;
 
     if (window._autoOpAbilitiesRunning) {
         alert("❌ Script is already running!");
@@ -6051,7 +6052,7 @@ name: "Set Next Fish",
     window._originalWidths = window._originalWidths || {};
 
     if (window.Phaser.GameObjects?.Group?.prototype && !window._groupHooked) {
-        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate ||
                               window.Phaser.GameObjects.Group.prototype.update;
 
         if (originalUpdate) {
@@ -6180,7 +6181,7 @@ name: "Set Next Fish",
     console.log("💎 Set XP\n");
 
     if (window.Phaser?.GameObjects?.Group?.prototype && !window._xpSceneHook) {
-        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate ||
                               window.Phaser.GameObjects.Group.prototype.update;
 
         if (originalUpdate) {
@@ -6240,7 +6241,7 @@ name: "Set Next Fish",
             }
         }
 
-    }, 200); 
+    }, 200);
 
     setTimeout(() => {
         if (window._scene?.gameManager) return;
@@ -6261,7 +6262,7 @@ name: "Set Next Fish",
     console.log("❤️ Reset Health\n");
 
     if (window.Phaser?.GameObjects?.Group?.prototype && !window._healthHook) {
-        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate || 
+        const originalUpdate = window.Phaser.GameObjects.Group.prototype.preUpdate ||
                               window.Phaser.GameObjects.Group.prototype.update;
 
         if (originalUpdate) {
@@ -6623,9 +6624,9 @@ name: "Set Next Fish",
 
     const comp = searchDOM();
 
-    if (!comp) { 
-        alert("❌ Component not found!"); 
-        return; 
+    if (!comp) {
+        alert("❌ Component not found!");
+        return;
     }
 
     if (!comp.towers || comp.towers.length === 0) {
@@ -6696,16 +6697,16 @@ name: "Set Next Fish",
 
     const comp = searchDOM();
 
-    if (!comp) { 
-        alert("❌ Component not found! Make sure you are in-game."); 
-        return; 
+    if (!comp) {
+        alert("❌ Component not found! Make sure you are in-game.");
+        return;
     }
 
     if (comp.enemies) {
         const count = comp.enemies.length;
-        comp.enemies = []; 
+        comp.enemies = [];
 
-        comp.futureEnemies = []; 
+        comp.futureEnemies = [];
 
         if (comp.state && comp.state.enemies) {
             comp.setState({ enemies: [], futureEnemies: [] });
@@ -6759,9 +6760,9 @@ name: "Set Next Fish",
 
     const comp = searchDOM();
 
-    if (!comp) { 
-        alert("❌ Component not found! Make sure you are in-game."); 
-        return; 
+    if (!comp) {
+        alert("❌ Component not found! Make sure you are in-game.");
+        return;
     }
 
     if (comp.tiles && comp.tiles.length > 0) {
@@ -7078,7 +7079,7 @@ name: "Set Next Fish",
                         },
                     },
                 ],
-            },             
+            },
             solocafe: {
                 img: "https://media.blooket.com/image/upload/v1663212881/Media/logos/Cafe_Logo_Resized.png",
                 name: "Café (Solo)",
@@ -7116,7 +7117,7 @@ name: "Set Next Fish",
                 while (hook) {
                     if (index === 4) {
                         levelHook = hook;
-                        break; 
+                        break;
                     }
                     hook = hook.next;
                     index++;
@@ -7129,7 +7130,7 @@ name: "Set Next Fish",
                         const newLevels = { ...val };
                         Object.keys(newLevels).forEach(key => {
                             if (typeof newLevels[key] === 'number') {
-                                newLevels[key] = 5; 
+                                newLevels[key] = 5;
 
                             }
                         });
@@ -7172,12 +7173,12 @@ name: "Set Next Fish",
 
     const iframe = document.createElement('iframe');
     document.body.appendChild(iframe);
-    const prompt = iframe.contentWindow.prompt; 
+    const prompt = iframe.contentWindow.prompt;
 
     const amountStr = prompt("💸 ENTER DESIRED CASH AMOUNT:", "1000000");
     document.body.removeChild(iframe);
 
-    if (!amountStr) return; 
+    if (!amountStr) return;
 
     const newAmount = cafeCash;
 
@@ -7208,7 +7209,7 @@ name: "Set Next Fish",
 
                     if (typeof val === 'number' && hook.queue && hook.queue.dispatch) {
 
-                         if (depth > 5) { 
+                         if (depth > 5) {
 
                              if (!result) result = [];
                              result.push(hook.queue.dispatch);
@@ -7303,9 +7304,9 @@ name: "Set Next Fish",
         if (node.memoizedState) {
             let hook = node.memoizedState;
             let index = 0;
-            let hook4 = null; 
+            let hook4 = null;
 
-            let hook5 = null; 
+            let hook5 = null;
 
             while (hook) {
                 if (index === 4) hook4 = hook;
@@ -7358,7 +7359,7 @@ name: "Set Next Fish",
         console.log("%c[makeCustomersOP] Restarting loop...", "color: orange");
     }
 
-    const OP_VALUE = 99999999999999; 
+    const OP_VALUE = 99999999999999;
 
     function scanAndModify() {
         const root = document.querySelector('#app') || document.body;
@@ -7635,10 +7636,10 @@ name: "Set Next Fish",
 
         if (chosenBlook) {
 
-            const maxSlots = 10; 
+            const maxSlots = 10;
             const currentLen = targetObj.factories.length;
 
-            const newBlook = { ...chosenBlook, level: 4, bonus: 1 }; 
+            const newBlook = { ...chosenBlook, level: 4, bonus: 1 };
 
             if (currentLen < maxSlots) {
                 targetObj.factories.push(newBlook);
@@ -7779,9 +7780,9 @@ name: "Set Next Fish",
         let count = 0;
         foundFactories.forEach(factory => {
 
-            factory.cash = [1e9, 1e9, 1e9, 1e9, 1e9]; 
+            factory.cash = [1e9, 1e9, 1e9, 1e9, 1e9];
 
-            factory.time = [0.01, 0.01, 0.01, 0.01, 0.01]; 
+            factory.time = [0.01, 0.01, 0.01, 0.01, 0.01];
 
             count++;
         });
@@ -7807,7 +7808,7 @@ name: "Set Next Fish",
     console.log("🛡️ HUNTING GLITCH STRINGS IN MEMORY...");
 
     const glitchNames = [
-        "Lunch Break", "Ad Spam", "Error 37", "Night Time", "#LOL", 
+        "Lunch Break", "Ad Spam", "Error 37", "Night Time", "#LOL",
         "Jokester", "Slow Mo", "Dance Party", "Vortex", "Reverse", "Flip", "Micro"
     ];
 
@@ -7818,7 +7819,7 @@ name: "Set Next Fish",
         console.log(`%c🔥 FOUND GLITCH: "${obj[key]}" in key "${key}"`, "color: red; font-weight: bold;");
         console.log("   Object:", obj);
 
-        obj[key] = ""; 
+        obj[key] = "";
 
         if (Array.isArray(obj.ads)) obj.ads = [];
         if (Array.isArray(obj.hazards)) obj.hazards = [];
@@ -7939,7 +7940,7 @@ name: "Set Next Fish",
         };
 
         const arr = targetObj.factories;
-        arr.length = 0; 
+        arr.length = 0;
 
         for (let i = 0; i < 10; i++) {
 
