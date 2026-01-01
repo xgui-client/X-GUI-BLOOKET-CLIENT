@@ -7021,53 +7021,7 @@ name: "Set Next Fish",
             })
         }, {
 
-            name: "Spam Attack Player",
-            description: "Attacks the player to make the game unplayable",
-            inputs: [{
-                name: "Player",
-                type: "options",
-                options() {
-                    let {
-                        stateNode: e
-                    } = Object.values(function e(t = document.querySelector("body>div")) {
-                            return Object.values(t)[1]?.children?.[0]?._owner.stateNode ? t : e(t.querySelector(":scope>div"))
-                        }
-                        ())[1].children[0]._owner;
-                    return new Promise(t => e.props.liveGameController._liveApp ? e.props.liveGameController.getDatabaseVal("c", e => e && t(Object.keys(e))) : t([]))
-                }
-            }],
-            type: "toggle",
-            enabled: false,
-            data: null,
-            run: function(name) {
-                if (this.enabled) {
-                    this.enabled = false;
-                    clearInterval(this.data);
-                    this.data = null;
-                } else {
-                    this.enabled = true;
-
-                    function reactHandler() {
-                        return Object.values(document.querySelector('body div[class*="_body"]'))[1].children[0]._owner;
-                    }
-
-                    var action = name + ":inspect";
-
-                    function spamAction() {
-                        var handler = reactHandler();
-                        if (handler && handler.stateNode && handler.stateNode.props && handler.stateNode.props.liveGameController) {
-                            handler.stateNode.props.liveGameController.setVal({
-                                id: handler.stateNode.props.client.hostId,
-                                path: "c/" + handler.stateNode.props.client.name + "/tat",
-                                val: action
-                            });
-                        }
-                    }
-
-                    this.data = setInterval(spamAction, 50);
-                }
-            }
-        }, {
+            
                         name: "Stock Food",
                         description: "Stocks all food to 99 (Not usable in the shop)",
                         run: function () {
