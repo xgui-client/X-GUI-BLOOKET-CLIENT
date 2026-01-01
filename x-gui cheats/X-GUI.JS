@@ -7027,17 +7027,15 @@ button,
                                         if (result) return result;
                                     }
                                 }
+
                                 const sn = getComp();
                                 if (!sn) return;
-                                let iframe = document.createElement('iframe');
-                                document.body.append(iframe);
-                                const input = iframe.contentWindow.prompt("Enter new Total Damage:", sn.state.totalDamage);
-                                iframe.remove();
-                                if (input) sn.setState({
-                                    totalDamage: parseInt(input)
+
+                                sn.setState({
+                                    totalDamage: Number(dmg)
                                 });
                             })();
-                        },
+                        }
                     },
                     {
                         name: "Set Round",
@@ -7106,6 +7104,7 @@ button,
                             (() => {
                                 function getComp(element = document.body, depth = 0) {
                                     if (depth > 20) return null;
+
                                     const fiber = element[Object.keys(element).find(k => k.includes('react'))];
                                     if (fiber) {
                                         let curr = fiber;
@@ -7115,24 +7114,21 @@ button,
                                             curr = curr.return;
                                         }
                                     }
+
                                     for (const child of element.children) {
                                         const result = getComp(child, depth + 1);
                                         if (result) return result;
                                     }
                                 }
+
                                 const sn = getComp();
                                 if (!sn) return;
-                                let iframe = document.createElement('iframe');
-                                document.body.append(iframe);
-                                const input = iframe.contentWindow.prompt("Enter new Token amount:", sn.state.tokens);
-                                iframe.remove();
-                                if (input) sn.setState({
-                                    tokens: parseInt(input)
+
+                                sn.setState({
+                                    tokens: Number(tokens)
                                 });
                             })();
-
-
-                        },
+                        }
                     },
                 ],
             },
