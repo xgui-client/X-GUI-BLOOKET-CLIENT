@@ -2274,56 +2274,44 @@ button,
                     },{
                         name: "Crash Game (all modes except Gold Quest, Crypto and Frenzy)",
                         description: "Crashes the host's game. Works only on Enter Nickname menu or if you have the extension.",
-                        run: (function() {
-     'use strict';
+                        run: async function() {
+        'use strict';
+        const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-     const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+        async function crashGame() {
+            await wait(500);
 
-     async function crashGame() {
-         await wait(500);
+            const nameInput = document.querySelector('.Form_longInput__Kyk9e');
+            const submitButton = document.querySelector('.FormSubmitButton_submitButton__MK2LJ');
 
-         const nameInput = document.querySelector('.Form_longInput__Kyk9e');
-         const submitButton = document.querySelector('.FormSubmitButton_submitButton__MK2LJ');
+            if (nameInput && submitButton) {
+                await wait(200);
+                nameInput.value = "toString";
+                nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+                await wait(100);
+                submitButton.click();
+            }
+        }
 
-         if (nameInput && submitButton) {
+        const onPlayPage = window.location.href.includes('play.blooket.com/play');
 
-             await wait(200);
-             nameInput.value = "toString";
-             nameInput.dispatchEvent(new Event('input', {
-                 bubbles: true
-             }));
+        if (onPlayPage) {
+            await crashGame();
+        } else {
+            await wait(500);
+            const nameInput = document.querySelector('.Form_longInput__Kyk9e');
+            const submitButton = document.querySelector('.FormSubmitButton_submitButton__MK2LJ');
 
-             await wait(100);
-             submitButton.click();
-         } else {}
-     }
-
-     const onPlayPage = window.location.href.includes('play.blooket.com/play');
-
-     if (onPlayPage) {
-
-         crashGame();
-     } else {
-
-         wait(500).then(() => {
-             const nameInput = document.querySelector('.Form_longInput__Kyk9e');
-             const submitButton = document.querySelector('.FormSubmitButton_submitButton__MK2LJ');
-
-             if (!nameInput || !submitButton) {
-
-                 window.postMessage({
-                     type: "FROM_PAGE_CRASH_GAME"
-                 }, "*");
-             } else {
-
-                 crashGame();
-             }
-         });
-     }
-})(),
+            if (!nameInput || !submitButton) {
+                window.postMessage({ type: "FROM_PAGE_CRASH_GAME" }, "*");
+            } else {
+                await crashGame();
+            }
+        }
+    }
+},
             
-
-                    }, {
+ {
 
 
 
