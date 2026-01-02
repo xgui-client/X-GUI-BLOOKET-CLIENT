@@ -6777,33 +6777,31 @@ name: "Set Next Fish",
                             },
                         ],
                         run: function (dmg) {
-(() => {
-    function getComp(element = document.body, depth = 0) {
-        if (depth > 20) return null;
-        const fiber = element[Object.keys(element).find(k => k.includes('react'))];
-        if (fiber) {
-            let curr = fiber;
-            while (curr) {
-                const sn = curr.stateNode || curr._owner?.stateNode;
-                if (sn?.state?.totalDamage !== undefined) return sn;
-                curr = curr.return;
+    (() => {
+        function getComp(element = document.body, depth = 0) {
+            if (depth > 20) return null;
+            const fiber = element[Object.keys(element).find(k => k.includes('react'))];
+            if (fiber) {
+                let curr = fiber;
+                while (curr) {
+                    const sn = curr.stateNode || curr._owner?.stateNode;
+                    if (sn?.state?.totalDamage !== undefined) return sn;
+                    curr = curr.return;
+                }
+            }
+            for (const child of element.children) {
+                const result = getComp(child, depth + 1);
+                if (result) return result;
             }
         }
-        for (const child of element.children) {
-            const result = getComp(child, depth + 1);
-            if (result) return result;
-        }
-    }
-    const sn = getComp();
-    if (!sn) return;
-    let iframe = document.createElement('iframe');
-    document.body.append(iframe);
-    const input = iframe.contentWindow.prompt("Enter new Total Damage:", sn.state.totalDamage);
-    iframe.remove();
-    if (input) sn.setState({ totalDamage: parseInt(input) });
-})();
+
+        const sn = getComp();
+        if (!sn) return;
+
+        sn.setState({ totalDamage: Number(dmg) });
+    })();
+}
                         },
-                    },
                     {
                         name: "Set Round",
                         description: "Sets the current round",
@@ -6867,34 +6865,32 @@ name: "Set Next Fish",
                             },
                         ],
                         run: function (tokens) {
-(() => {
-    function getComp(element = document.body, depth = 0) {
-        if (depth > 20) return null;
-        const fiber = element[Object.keys(element).find(k => k.includes('react'))];
-        if (fiber) {
-            let curr = fiber;
-            while (curr) {
-                const sn = curr.stateNode || curr._owner?.stateNode;
-                if (sn?.state?.tokens !== undefined) return sn;
-                curr = curr.return;
+    (() => {
+        function getComp(element = document.body, depth = 0) {
+            if (depth > 20) return null;
+
+            const fiber = element[Object.keys(element).find(k => k.includes('react'))];
+            if (fiber) {
+                let curr = fiber;
+                while (curr) {
+                    const sn = curr.stateNode || curr._owner?.stateNode;
+                    if (sn?.state?.tokens !== undefined) return sn;
+                    curr = curr.return;
+                }
+            }
+
+            for (const child of element.children) {
+                const result = getComp(child, depth + 1);
+                if (result) return result;
             }
         }
-        for (const child of element.children) {
-            const result = getComp(child, depth + 1);
-            if (result) return result;
-        }
-    }
-    const sn = getComp();
-    if (!sn) return;
-    let iframe = document.createElement('iframe');
-    document.body.append(iframe);
-    const input = iframe.contentWindow.prompt("Enter new Token amount:", sn.state.tokens);
-    iframe.remove();
-    if (input) sn.setState({ tokens: parseInt(input) });
-})();
 
+        const sn = getComp();
+        if (!sn) return;
 
-                        },
+        sn.setState({ tokens: Number(tokens) });
+    })();
+                        }
                     },
                 ],
             },
