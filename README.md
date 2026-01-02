@@ -2,6 +2,7 @@
 # EXTENSION MADE BY LANDSEDGE!
 # CLIENT SIDED BLOOK CHANGER
 # FIXED MOST CHEATS!
+with the help of @redhorse26!
 
 [![Website](https://img.shields.io/badge/Website-X--GUI-1f6feb?style=for-the-badge&logo=google-chrome&logoColor=white)](https://xgui-client.github.io)
 [![GitHub stars](https://img.shields.io/github/stars/xull-xxx/X-GUI-BLOOKET-CLIENT?style=for-the-badge&logo=github)](https://github.com/xull-xxx/X-GUI-BLOOKET-CLIENT/stargazers)
@@ -62,7 +63,7 @@
 
 ## 📜 Credits
 - **GUI Created By:** 05Konz 
-- **Maintained & Updated By:** Xullys, Lil Skittle And CatHead
+- **Maintained & Updated By:** Xullys, Lil Skittle, CatHead and redhorse26
 - **Huge Credit To** CryptoDude3 **and** Duck Club Blooket Hacks!
 
 - **JOIN THEIR DISCORD** [HERE](https://discord.gg/FcYy4uHUws)
