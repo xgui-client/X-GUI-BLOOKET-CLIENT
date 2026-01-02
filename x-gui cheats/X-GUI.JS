@@ -1,3 +1,5 @@
+
+
 /**
  * @license AGPL-3.0
  * Blooket Cheats
@@ -51,7 +53,7 @@ console.log("%c Star the GitHub repo! %c https://github.com/xgui-client/X-GUI-BL
     const timeProcessed = 1747005941679;
     let latestProcess = -1;
     const cheat = (async () => {
-        const versionName = "6.65x";
+        const versionName = "6.66x";
         const gui = document.createElement("div");
         Object.assign(gui.style, {
             top: window.innerHeight / 2 - 250 + "px",
@@ -10350,6 +10352,7 @@ button,
 
         // Versions array (30 versions, highest to lowest)
         const versions = [
+["Version 6.66x", "ADDED SWAL ALERTS!", "null"],
             ["Version 6.65x", "ADDED CLIENT SIDED BLOOK EDITOR", "null"],
             ["Version 6.64x", "FIXED MOST GAMEMODES", "null"],
             ["Version 6.63x", "ADDED BLOOK EDITOR AND UPDATED MOBILE MODE", "null"],
